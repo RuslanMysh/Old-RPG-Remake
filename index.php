@@ -1,196 +1,213 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Phaser Game</title>
-    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Good Ass Coder</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0c0b0cff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        .title {
+            color: #f0e6d2;
+            text-align: center;
+            margin-top: -190%;
+            margin-left: 100%;
+            text-shadow: 0 0 10px #ffd700, 2px 2px 0 #000;
+            font-size: 2.5rem;
+            letter-spacing: 3px;
+        }
+        .instructions {
+            color: #c0c0c0;
+            text-align: center;
+            margin-top: 20%;
+            font-size: 1rem;
+            max-width: 320px;
+            line-height: 1.4;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .loading {
+            color: #ffd700;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1 class="title">ПЕРСОНАЖ</h1>
+        <p class="instructions">Explore the lands of Hyrule. Use arrow keys to move the marker.</p>
+    </div>
 
     <script>
-       var config = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 300 },
-            debug: false
+        class ZeldaScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'ZeldaScene' });
+                this.marker = null;
+                this.cursorKeys = null;
+                this.mapData = null;
+                this.tileSize = 32;
+            }
+
+            preload() {
+                // ПРИМЕР ЗАГРУЗКИ ГОТОВЫХ ТЕКСТУР
+                // В реальном проекте пути будут указывать на ваши файлы
+                
+                // Загрузка текстур для тайлов
+                this.load.image('grass', 'assets/grass.png');
+                this.load.image('water', 'assets/water.png');
+                this.load.image('mountain', 'assets/rock.png');
+                this.load.image('sand', 'assets/sand.png');
+                this.load.image('forest', 'assets/tree.png');
+                this.load.image('path', 'assets/path.png');
+                
+                // Загрузка текстуры для маркера
+                //this.load.image('marker', 'https://example.com/assets/ui/marker.png');
+                
+                // Загрузка фонового изображения
+                //this.load.image('background', 'https://example.com/assets/backgrounds/hyrule_field.jpg');
+                
+                // Загрузка спрайтов для объектов
+                //this.load.image('tree', 'assets/tree.png');
+                //this.load.image('rock', 'https://example.com/assets/objects/rock.png');
+                //this.load.image('chest', 'https://example.com/assets/objects/chest.png');
+                
+                // Загрузка изображения для UI
+                //this.load.image('compass', 'https://example.com/assets/ui/compass.png');
+                
+                // Отображение индикатора загрузки
+                let loadingText = this.add.text(160, 140, 'Loading Hyrule...', { 
+                    font: '16px Arial', 
+                    fill: '#ffd700' 
+                }).setOrigin(0.5);
+                
+                // Прогресс загрузки
+                this.load.on('progress', function(value) {
+                    loadingText.setText('Loading Hyrule: ' + Math.round(value * 100) + '%');
+                });
+            }
+
+            create() {
+                // Определяем данные карты (0-трава, 1-вода, 2-горы, 3-песок, 4-лес, 5-дорога)
+                this.mapData = [
+                    [2, 0, 0, 4, 0, 4, 0, 0, 4, 0, 0, 4, 0, 0, 5, 5, 0, 4, 4, 2],
+                    [2, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 5, 5, 4, 0, 4, 2],
+                    [2, 0, 0, 0, 0, 4, 0, 4, 0, 0, 4, 4, 0, 5, 5, 5, 0, 0, 0, 2],
+                    [2, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 4, 0, 0, 4, 2],
+                    [2, 0, 4, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 4, 0, 0, 0, 0, 2],
+                    [2, 0, 0, 0, 0, 0, 5, 5, 5, 5, 4, 5, 5, 0, 0, 0, 0, 4, 0, 2],
+                    [2, 3, 3, 3, 3, 5, 5, 4, 2, 4, 2, 4, 5, 5, 3, 3, 3, 3, 3, 2],
+                    [1, 1, 1, 1, 3, 5, 4, 2, 2, 2, 2, 2, 4, 5, 3, 1, 1, 1, 1, 1],
+                    [2, 3, 3, 3, 3, 5, 5, 4, 2, 4, 2, 4, 5, 5, 3, 3, 3, 3, 3, 2],
+                    [2, 0, 0, 0, 0, 0, 5, 5, 5, 5, 4, 5, 5, 0, 0, 0, 0, 0, 0, 2],
+                    [2, 4, 0, 0, 0, 4, 5, 0, 0, 5, 5, 5, 3, 3, 3, 3, 0, 0, 0, 2],
+                    [2, 0, 0, 4, 0, 5, 5, 4, 0, 0, 0, 3, 3, 1, 3, 3, 3, 0, 0, 2],
+                    [2, 0, 0, 0, 4, 5, 4, 0, 0, 0, 3, 3, 1, 1, 1, 3, 3, 0, 0, 2],
+                    [2, 4, 0, 0, 0, 5, 0, 0, 4, 3, 3, 1, 1, 1, 1, 1, 3, 3, 4, 2],
+                    [2, 2, 2, 2, 4, 5, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+                ];
+
+                // Отрисовываем карту с использованием загруженных текстур
+                for (let y = 0; y < this.mapData.length; y++) {
+                    for (let x = 0; x < this.mapData[y].length; x++) {
+                        const tileType = this.mapData[y][x];
+                        let textureKey = 'grass';
+                        
+                        switch (tileType) {
+                            case 0: textureKey = 'grass'; break;
+                            case 1: textureKey = 'water'; break;
+                            case 2: textureKey = 'mountain'; break;
+                            case 3: textureKey = 'sand'; break;
+                            case 4: textureKey = 'forest'; break;
+                            case 5: textureKey = 'path'; break;
+                        }
+                        
+                        // Создаем тайл с загруженной текстурой
+                        this.add.image(x * this.tileSize + this.tileSize/2, y * this.tileSize + this.tileSize/2, textureKey);
+                    }
+                }
+
+                // Добавляем объекты на карту с использованием загруженных спрайтов
+                //this.add.image(5 * this.tileSize, 3 * this.tileSize, 'tree');
+               // this.add.image(15 * this.tileSize, 5 * this.tileSize, 'rock');
+                //this.add.image(8 * this.tileSize, 10 * this.tileSize, 'chest');
+                //this.add.image(12 * this.tileSize, 7 * this.tileSize, 'tree');
+
+                // Добавляем маркер для навигации
+                //this.marker = this.add.image(this.tileSize/2, this.tileSize/2, 'marker');
+                //this.marker.setDepth(1); // Поверх других элементов
+
+                // Добавляем UI элементы
+                //this.add.image(300, 20, 'compass');
+
+                // Добавляем заголовок
+                this.add.text(160, 20, 'ПЛЮСОВЫЕ ХОЛМЫ', {
+                    font: '16px Arial',
+                    fill: '#00aeffff',
+                    stroke: '#eaf6ffff',
+                    strokeThickness: 4,
+                    shadow: {
+                        offsetX: 2,
+                        offsetY: 2,
+                        color: '#000000ff',
+                        blur: 0,
+                        stroke: true
+                    }
+                }).setOrigin(0.5);
+
+                // Настройка управления
+                this.cursorKeys = this.input.keyboard.createCursorKeys();
+            }
+
+            update() {
+                /*
+                // Обработка перемещения маркера
+                if (this.cursorKeys.left.isDown && this.marker.x > this.tileSize/2) {
+                    this.marker.x -= this.tileSize;
+                } else if (this.cursorKeys.right.isDown && this.marker.x < (20 * this.tileSize - this.tileSize/2)) {
+                    this.marker.x += this.tileSize;
+                }
+                
+                if (this.cursorKeys.up.isDown && this.marker.y > this.tileSize/2) {
+                    this.marker.y -= this.tileSize;
+                } else if (this.cursorKeys.down.isDown && this.marker.y < (15 * this.tileSize - this.tileSize/2)) {
+                    this.marker.y += this.tileSize;
+                }
+                    */
+            }
         }
-    },
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
-};
 
-var player;
-var stars;
-var bombs;
-var platforms;
-var cursors;
-var score = 0;
-var gameOver = false;
-var scoreText;
+        const config = {
+            type: Phaser.AUTO,
+            width: 640,
+            height: 480,
+            backgroundColor: '#000000',
+            scene: ZeldaScene,
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            render: {
+                pixelArt: false
+            }
+        };
 
-var game = new Phaser.Game(config);
-
-function preload ()
-{
-    this.load.image('sky', 'assets/sky.jpg');
-    this.load.image('ground', 'assets/ground.png');
-    this.load.image('star', 'assets/star.png');
-    this.load.image('bomb', 'assets/bomb.png');
-    this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
-}
-
-function create ()
-{
-
-    this.add.image(400, 300, 'sky');
-
-
-    platforms = this.physics.add.staticGroup();
-
-
-    platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-
-
-    platforms.create(600, 400, 'ground');
-    platforms.create(50, 250, 'ground');
-    platforms.create(750, 220, 'ground');
-
-
-    player = this.physics.add.sprite(100, 450, 'dude');
-
-
-    player.setBounce(0.2);
-    player.setCollideWorldBounds(true);
-
-
-    this.anims.create({
-        key: 'left',
-        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
-        frameRate: 10,
-        repeat: -1
-    });
-
-    this.anims.create({
-        key: 'turn',
-        frames: [ { key: 'dude', frame: 4 } ],
-        frameRate: 20
-    });
-
-    this.anims.create({
-        key: 'right',
-        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
-        frameRate: 10,
-        repeat: -1
-    });
-
-
-    cursors = this.input.keyboard.createCursorKeys();
-
-
-    stars = this.physics.add.group({
-        key: 'star',
-        repeat: 11,
-        setXY: { x: 12, y: 0, stepX: 70 }
-    });
-
-    stars.children.iterate(function (child) {
-
-        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-
-    });
-
-    bombs = this.physics.add.group();
-
-
-    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
-
-    this.physics.add.collider(player, platforms);
-    this.physics.add.collider(stars, platforms);
-    this.physics.add.collider(bombs, platforms);
-
-    this.physics.add.overlap(player, stars, collectStar, null, this);
-
-    this.physics.add.collider(player, bombs, hitBomb, null, this);
-}
-
-function update ()
-{
-    if (gameOver)
-    {
-        return;
-    }
-
-    if (cursors.left.isDown)
-    {
-        player.setVelocityX(-160);
-
-        player.anims.play('left', true);
-    }
-    else if (cursors.right.isDown)
-    {
-        player.setVelocityX(160);
-
-        player.anims.play('right', true);
-    }
-    else
-    {
-        player.setVelocityX(0);
-
-        player.anims.play('turn');
-    }
-
-    if (cursors.up.isDown && player.body.touching.down)
-    {
-        player.setVelocityY(-330);
-    }
-}
-
-function collectStar (player, star)
-{
-    star.disableBody(true, true);
-
-
-    score += 10;
-    scoreText.setText('Score: ' + score);
-
-    if (stars.countActive(true) === 0)
-    {
-
-        stars.children.iterate(function (child) {
-
-            child.enableBody(true, child.x, 0, true, true);
-
-        });
-
-        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
-
-        var bomb = bombs.create(x, 16, 'bomb');
-        bomb.setBounce(1);
-        bomb.setCollideWorldBounds(true);
-        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-        bomb.allowGravity = false;
-
-    }
-}
-
-function hitBomb (player, bomb)
-{
-    this.physics.pause();
-
-    player.setTint(0xff0000);
-
-    player.anims.play('turn');
-
-    gameOver = true;
-}
-
+        const game = new Phaser.Game(config);
     </script>
-
 </body>
 </html>
