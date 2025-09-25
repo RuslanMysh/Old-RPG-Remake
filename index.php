@@ -51,7 +51,7 @@
 <body>
     <div class="container">
         <h1 class="title">ПЕРСОНАЖ</h1>
-        <p class="instructions">Explore the lands of Hyrule. Use arrow keys to move the marker.</p>
+        <p class="instructions">Исследуй ПЛЮСОВЫЕ ХОЛМЫ.</p>
     </div>
 
     <script>
@@ -65,9 +65,7 @@
             }
 
             preload() {
-                // ПРИМЕР ЗАГРУЗКИ ГОТОВЫХ ТЕКСТУР
-                // В реальном проекте пути будут указывать на ваши файлы
-                
+                            
                 // Загрузка текстур для тайлов
                 this.load.image('grass', 'assets/grass.png');
                 this.load.image('water', 'assets/water.png');
@@ -75,31 +73,19 @@
                 this.load.image('sand', 'assets/sand.png');
                 this.load.image('forest', 'assets/tree.png');
                 this.load.image('path', 'assets/path.png');
-                
-                // Загрузка текстуры для маркера
-                //this.load.image('marker', 'https://example.com/assets/ui/marker.png');
-                
-                // Загрузка фонового изображения
-                //this.load.image('background', 'https://example.com/assets/backgrounds/hyrule_field.jpg');
-                
-                // Загрузка спрайтов для объектов
-                //this.load.image('tree', 'assets/tree.png');
-                //this.load.image('rock', 'https://example.com/assets/objects/rock.png');
-                //this.load.image('chest', 'https://example.com/assets/objects/chest.png');
-                
-                // Загрузка изображения для UI
-                //this.load.image('compass', 'https://example.com/assets/ui/compass.png');
-                
+                             
                 // Отображение индикатора загрузки
                 let loadingText = this.add.text(160, 140, 'Loading Hyrule...', { 
                     font: '16px Arial', 
                     fill: '#ffd700' 
                 }).setOrigin(0.5);
                 
+                /*
                 // Прогресс загрузки
                 this.load.on('progress', function(value) {
                     loadingText.setText('Loading Hyrule: ' + Math.round(value * 100) + '%');
                 });
+                */
             }
 
             create() {
@@ -142,20 +128,7 @@
                     }
                 }
 
-                // Добавляем объекты на карту с использованием загруженных спрайтов
-                //this.add.image(5 * this.tileSize, 3 * this.tileSize, 'tree');
-               // this.add.image(15 * this.tileSize, 5 * this.tileSize, 'rock');
-                //this.add.image(8 * this.tileSize, 10 * this.tileSize, 'chest');
-                //this.add.image(12 * this.tileSize, 7 * this.tileSize, 'tree');
-
-                // Добавляем маркер для навигации
-                //this.marker = this.add.image(this.tileSize/2, this.tileSize/2, 'marker');
-                //this.marker.setDepth(1); // Поверх других элементов
-
-                // Добавляем UI элементы
-                //this.add.image(300, 20, 'compass');
-
-                // Добавляем заголовок
+                
                 this.add.text(160, 20, 'ПЛЮСОВЫЕ ХОЛМЫ', {
                     font: '16px Arial',
                     fill: '#00aeffff',
