@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <h1>Редактор персонажа</h1>
 
-        <form method="POST">
+        <form method="POST" action="index.php">
             <div class="form-group">
                 <label for="programist">Язык программирования:</label>
                 <select id="programist" name="programist" required>
