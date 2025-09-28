@@ -79,13 +79,7 @@
                     font: '16px Arial', 
                     fill: '#ffd700' 
                 }).setOrigin(0.5);
-                
-                /*
-                // Прогресс загрузки
-                this.load.on('progress', function(value) {
-                    loadingText.setText('Loading Hyrule: ' + Math.round(value * 100) + '%');
-                });
-                */
+                            
             }
 
             create() {
@@ -177,8 +171,16 @@
             },
             render: {
                 pixelArt: false
+            },
+                physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
             }
-        };
+        }
+        
 
         const game = new Phaser.Game(config);
     </script>

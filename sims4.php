@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
 
-            <button type="submit" class="submit-btn">Создать персонажа</button>
+            <a href="index.php">Создать персонажа</a>
         </form>
     </div>
 </body>
