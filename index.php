@@ -1,4 +1,7 @@
 <?php
+
+use Dom\CharacterData;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $character_data = [
         'Язык программирования' => $_POST['programist'] ?? 'Не указано',
@@ -112,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <script>
+        
         class ZeldaScene extends Phaser.Scene {
             constructor() {
                 super({ key: 'ZeldaScene' });
@@ -140,21 +144,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             createTextures() {
                 
                 const tileSize = this.tileSize;
-                
-
+    
                 const playerTexture = this.textures.createCanvas('player', tileSize, tileSize);
                 const playerCtx = playerTexture.getContext();
-                playerCtx.fillStyle = '#006400';
+
+                // Основные цвета персонажа
+                let tunicColor = '#006400'; // Зеленый по умолчанию
+                let hairColor = '#ffd700';  // Золотистый по умолчанию
+                
+                // PHP условие для изменения цвета туники
+                <?php if(isset($character_data['Язык программирования']) && $character_data['Язык программирования'] === 'c#'): ?>
+                    tunicColor = '#800080'; // Фиолетовый для C#
+                <?php endif; ?>
+                
+                // Рисуем персонажа с учетом выбранных цветов
+                playerCtx.fillStyle = tunicColor;
                 playerCtx.fillRect(8, 8, 16, 16);
+                
                 playerCtx.fillStyle = '#1f411fff';
                 playerCtx.fillRect(24, 10, 3, 13);
                 playerCtx.fillStyle = '#1f411fff';
                 playerCtx.fillRect(5, 10, 3, 13);
+                
                 playerCtx.fillStyle = '#ffdbac';
                 playerCtx.fillRect(12, 4, 8, 8);
-                playerCtx.fillStyle = '#006400';
+                
+                playerCtx.fillStyle = tunicColor;
                 playerCtx.fillRect(10, 2, 12, 4);
-                playerCtx.fillStyle = '#ffd700';
+                
+                playerCtx.fillStyle = hairColor;
                 playerCtx.fillRect(12, 8, 8, 4);
 
                 playerCtx.fillStyle = '#080808ff';
@@ -162,6 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 playerCtx.fillStyle = '#080808ff';
                 playerCtx.fillRect(17, 22, 7, 3);
+                
                 playerTexture.refresh();
             }
 
@@ -265,9 +284,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else if (this.cursorKeys.down.isDown) {
                     this.player.setVelocityY(100);
                 }
+
+                this.checkForLocationTransition();
+            }
+            checkForLocationTransition() {
+                // Координаты верхней границы тропинки (ряд 6, столбцы 14-15)
+                const pathTopRow = 1;
+                const pathStartCol = 14;
+                const pathEndCol = 15;
+                
+                // Получаем текущую позицию игрока в тайлах
+                const playerTileX = Math.floor(this.player.x / this.tileSize);
+                const playerTileY = Math.floor(this.player.y / this.tileSize);
+                
+                // Проверяем, находится ли игрок на верхней границе тропинки
+                if (playerTileY === pathTopRow && 
+                    playerTileX >= pathStartCol && 
+                    playerTileX <= pathEndCol) {
+                    
+                    // Переход на другую страницу сайта
+                    window.location.href = 'sharpField.php'; // Замените на URL вашей следующей страницы
+                }
             }
         }
-
+        
         const config = {
             type: Phaser.AUTO,
             width: 640,
