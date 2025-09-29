@@ -64,13 +64,13 @@
                 this.tileSize = 32;
                 this.collisionLayer = null;
                 // Начальная позиция игрока (можно изменить)
-                this.playerStartX = 3; // координата X в тайлах
-                this.playerStartY = 3; // координата Y в тайлах
+                this.playerStartX = 4; // координата X в тайлах
+                this.playerStartY = 7; // координата Y в тайлах
             }
 
             preload() {
                 // Создаем текстуры программно
-                //this.createTextures();
+                this.createTextures();
 
                 this.load.image('grass', 'assets/grass.png');
                 this.load.image('water', 'assets/water.png');
@@ -81,98 +81,30 @@
             }
 
             createTextures() {
+                
                 const tileSize = this.tileSize;
                 
-                // Трава
-                const grassTexture = this.textures.createCanvas('grass', tileSize, tileSize);
-                const grassCtx = grassTexture.getContext();
-                grassCtx.fillStyle = '#3a7d34';
-                grassCtx.fillRect(0, 0, tileSize, tileSize);
-                grassCtx.fillStyle = '#4a8d3c';
-                for (let i = 0; i < tileSize; i += 4) {
-                    for (let j = 0; j < tileSize; j += 4) {
-                        if ((i + j) % 8 === 0) grassCtx.fillRect(i, j, 2, 2);
-                    }
-                }
-                grassTexture.refresh();
 
-                // Вода
-                const waterTexture = this.textures.createCanvas('water', tileSize, tileSize);
-                const waterCtx = waterTexture.getContext();
-                waterCtx.fillStyle = '#2a5c8a';
-                waterCtx.fillRect(0, 0, tileSize, tileSize);
-                waterCtx.strokeStyle = '#3a7cba';
-                waterCtx.lineWidth = 2;
-                for (let i = -4; i < tileSize; i += 8) {
-                    waterCtx.beginPath();
-                    waterCtx.arc(i, tileSize/2, 3, 0, Math.PI);
-                    waterCtx.stroke();
-                }
-                waterTexture.refresh();
-
-                // Горы
-                const mountainTexture = this.textures.createCanvas('mountain', tileSize, tileSize);
-                const mountainCtx = mountainTexture.getContext();
-                mountainCtx.fillStyle = '#6d6d6d';
-                mountainCtx.fillRect(0, 0, tileSize, tileSize);
-                mountainCtx.fillStyle = '#8d8d8d';
-                mountainCtx.fillRect(4, 4, 6, 6);
-                mountainCtx.fillRect(18, 10, 8, 8);
-                mountainCtx.fillRect(10, 18, 7, 7);
-                mountainTexture.refresh();
-
-                // Песок
-                const sandTexture = this.textures.createCanvas('sand', tileSize, tileSize);
-                const sandCtx = sandTexture.getContext();
-                sandCtx.fillStyle = '#d9c8a3';
-                sandCtx.fillRect(0, 0, tileSize, tileSize);
-                sandCtx.fillStyle = '#e9d8b3';
-                for (let i = 0; i < 20; i++) {
-                    sandCtx.fillRect(Phaser.Math.Between(0, tileSize-2), Phaser.Math.Between(0, tileSize-2), 2, 2);
-                }
-                sandTexture.refresh();
-
-                // Лес
-                const forestTexture = this.textures.createCanvas('forest', tileSize, tileSize);
-                const forestCtx = forestTexture.getContext();
-                forestCtx.fillStyle = '#3a7d34';
-                forestCtx.fillRect(0, 0, tileSize, tileSize);
-                forestCtx.fillStyle = '#4a3c1a';
-                forestCtx.fillRect(12, 18, 4, 10);
-                forestCtx.fillRect(24, 14, 3, 8);
-                forestCtx.fillStyle = '#2d5a2d';
-                forestCtx.beginPath();
-                forestCtx.arc(14, 16, 6, 0, Math.PI * 2);
-                forestCtx.fill();
-                forestCtx.beginPath();
-                forestCtx.arc(25, 12, 5, 0, Math.PI * 2);
-                forestCtx.fill();
-                forestTexture.refresh();
-
-                // Дорога
-                const pathTexture = this.textures.createCanvas('path', tileSize, tileSize);
-                const pathCtx = pathTexture.getContext();
-                pathCtx.fillStyle = '#a68a64';
-                pathCtx.fillRect(0, 0, tileSize, tileSize);
-                pathCtx.fillStyle = '#b69a74';
-                for (let i = 0; i < 4; i++) {
-                    for (let j = 0; j < 4; j++) {
-                        if ((i + j) % 2 === 0) pathCtx.fillRect(i*8, j*8, 4, 4);
-                    }
-                }
-                pathTexture.refresh();
-
-                // Персонаж
                 const playerTexture = this.textures.createCanvas('player', tileSize, tileSize);
                 const playerCtx = playerTexture.getContext();
                 playerCtx.fillStyle = '#006400';
                 playerCtx.fillRect(8, 8, 16, 16);
+                playerCtx.fillStyle = '#1f411fff';
+                playerCtx.fillRect(24, 10, 3, 13);
+                playerCtx.fillStyle = '#1f411fff';
+                playerCtx.fillRect(5, 10, 3, 13);
                 playerCtx.fillStyle = '#ffdbac';
                 playerCtx.fillRect(12, 4, 8, 8);
                 playerCtx.fillStyle = '#006400';
                 playerCtx.fillRect(10, 2, 12, 4);
                 playerCtx.fillStyle = '#ffd700';
                 playerCtx.fillRect(12, 8, 8, 4);
+
+                playerCtx.fillStyle = '#080808ff';
+                playerCtx.fillRect(8, 22, 7, 3);
+
+                playerCtx.fillStyle = '#080808ff';
+                playerCtx.fillRect(17, 22, 7, 3);
                 playerTexture.refresh();
             }
 
