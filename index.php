@@ -1,3 +1,17 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $character_data = [
+        'Язык программирования' => $_POST['programist'] ?? 'Не указано',
+        'Стиль волос' => $_POST['hair_style'] ?? 'Не указано',
+        'Цвет волос' => $_POST['hair_color'] ?? 'Не указано',
+        'Стиль бороды' => $_POST['beard_style'] ?? 'Не указано',
+        'Цвет бороды' => $_POST['beard_color'] ?? 'Не указано',
+        'Цвет кожи' => $_POST['skin_color'] ?? 'Не указано',
+        'Цвет глаз' => $_POST['eyes_color'] ?? 'Не указано'
+    ];
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,13 +60,56 @@
             font-size: 1.2rem;
             text-align: center;
         }
+        .character-data {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ffffffff;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        
+        .character-data h2 {
+            color: #ffffffff;
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .character-data ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .character-data li {
+            margin-bottom: 8px;
+            padding: 5px;
+        }
+        
+        .character-data strong {
+            color: #ffffffff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="title">ПЕРСОНАЖ</h1>
         <p class="instructions">Исследуй ПЛЮСОВЫЕ ХОЛМЫ.</p>
     </div>
+
+    <?php if (isset($character_data)): ?>
+    <div class="character-data">
+        <h2>Данные персонажа</h2>
+        <ul>
+            <?php foreach ($character_data as $key => $value): ?>
+                <li><strong><?= htmlspecialchars($key) ?>:</strong> <?= htmlspecialchars($value) ?></li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+    <?php endif; ?>
 
     <script>
         class ZeldaScene extends Phaser.Scene {
