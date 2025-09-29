@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="blonde" <?= isset($beard_color) && $beard_color === 'blonde' ? 'selected' : '' ?>>Блондин</option>
                     <option value="red" <?= isset($beard_color) && $beard_color === 'red' ? 'selected' : '' ?>>Рыжий</option>
                     <option value="gray" <?= isset($beard_color) && $beard_color === 'gray' ? 'selected' : '' ?>>Седой</option>
-                    <option value="pink" <?= isset($hair_color) && $hair_color === 'pink' ? 'selected' : '' ?>>Розовый</option>
+                    <option value="pink" <?= isset($beard_color) && $beard_color === 'pink' ? 'selected' : '' ?>>Розовый</option>
                 </select>
             </div>
 
@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
 
-            <a href="index.php">Создать персонажа</a>
+            <button type="submit" class="submit-btn">Создать персонажа</button>
         </form>
     </div>
 </body>
