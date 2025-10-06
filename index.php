@@ -1,7 +1,5 @@
-
 <?php
-    require("character.php");
-?>
-<?php
-    require("script.php");
+session_start();
+require("character.php");
+require("script.php");
 ?>

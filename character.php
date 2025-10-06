@@ -1,10 +1,13 @@
-
 <?php
+if (isset($_SESSION['character_data'])) {
+    $character_data = $_SESSION['character_data'];
+} else {
+    $character_data = [];
+}
 
-use Dom\CharacterData;
-
+// Если пришел POST-запрос, сохраняем данные в сессию
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $character_data = [
+    $_SESSION['character_data'] = [
         'Язык программирования' => $_POST['programist'] ?? 'Не указано',
         'Стиль волос' => $_POST['hair_style'] ?? 'Не указано',
         'Цвет волос' => $_POST['hair_color'] ?? 'Не указано',
@@ -13,6 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'Цвет кожи' => $_POST['skin_color'] ?? 'Не указано',
         'Цвет глаз' => $_POST['eyes_color'] ?? 'Не указано'
     ];
+    
+    // Обновляем переменную
+    $character_data = $_SESSION['character_data'];
 }
 ?>
 

@@ -1,4 +1,28 @@
 <?php
+session_start(); // Добавляем в самое начало
+
+// Если есть данные в сессии, используем их для предзаполнения формы
+if (isset($_SESSION['character_data'])) {
+    $character_data = $_SESSION['character_data'];
+    $programist = $character_data['Язык программирования'] ?? '';
+    $hair_style = $character_data['Стиль волос'] ?? '';
+    $hair_color = $character_data['Цвет волос'] ?? '';
+    $beard_style = $character_data['Стиль бороды'] ?? '';
+    $beard_color = $character_data['Цвет бороды'] ?? '';
+    $skin_color = $character_data['Цвет кожи'] ?? '';
+    $eyes_color = $character_data['Цвет глаз'] ?? '';
+} else {
+    // Инициализируем переменные, если нет данных в сессии
+    $programist = '';
+    $hair_style = '';
+    $hair_color = '';
+    $beard_style = '';
+    $beard_color = '';
+    $skin_color = '';
+    $eyes_color = '';
+}
+
+// Если пришел POST-запрос, обновляем переменные
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $programist = $_POST['programist'] ?? '';
     $hair_style = $_POST['hair_style'] ?? '';
