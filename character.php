@@ -75,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             top: 20px;
             left: 20px;
             color: #fff;
+            text-shadow: 0 0 10px #ffffffff, 2px 2px 0 #000;
             font-family: Arial, sans-serif;
             padding: 15px;
             border-radius: 10px;

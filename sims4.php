@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 16px;
         }
         .submit-btn:hover {
-            background: #ddd;
+            background: #0e0e0eff;
         }
     </style>
 </head>
