@@ -42,36 +42,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Редактор персонажа</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            background: #0e0e0eff;
         }
         .container {
-            background: white;
+            background: #08091fff;
             padding: 20px;
-            border: 1px solid #ddd;
+            border: 1px solid #ffd700;
+            color: #e8e8e8ff;
+            text-shadow: 0 0 10px #ffd700, 2px 2px 0 #000;
             border-radius: 10px;
         }
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 20px;  
         }
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
-            
         }
         select {
             width: 100%;
             padding: 8px;
-            border: 1px solid #ddd;
+            background: #08091fff;
+            border: 1px solid #ffd700;
+            color: #e8e8e8ff;
+            text-shadow: 0 0 10px #ffd700, 2px 2px 0 #000;
             border-radius: 4px;
             cursor: pointer;
         }
         .submit-btn {
             padding: 10px 20px;
-            border: 1px solid #ddd;
+            background: #08091fff;
+            border: 1px solid #ffd700;
+            color: #e8e8e8ff;
+            text-shadow: 0 0 10px #ffd700, 2px 2px 0 #000;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
