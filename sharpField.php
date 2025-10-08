@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body id="body">
     <div class="container">
-        <p class="instructions">Вас принесло сюда течение реки, в которую вы упали, когда повозка с заключёнными было опракинута. Вам нужно найти поселение. Для начала, исследуйте местность.</p>
+        <p class="instructions">Вы прибыли на Шарповые поля. Здесь живут опытные программисты C#.</p>
     </div>
 
     <?php if (isset($character_data)): ?>
@@ -134,6 +134,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 this.mapData = null;
                 this.tileSize = 32;
                 this.collisionLayer = null;
+                this.npc = null;
+                this.questGiven = false;
+                this.questText = null;
+                this.questActive = false;
 
                 this.playerStartX = 14; 
                 this.playerStartY = 11; 
@@ -202,9 +206,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     eyesColor = '#5e0808ff'; 
                 <?php endif; ?>
 
-
-
-
                 <?php if(isset($character_data['Цвет волос']) && $character_data['Цвет волос'] === 'черные'): ?>               
                     hairColor = '#0a080aff'; 
                 <?php endif; ?>
@@ -224,7 +225,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     hairColor = '#ff6edbff'; 
                 <?php endif; ?>
 
-
                 <?php if(isset($character_data['Цвет бороды']) && $character_data['Цвет бороды'] === 'черный'): ?>               
                     beardColor = '#0a080aff'; 
                 <?php endif; ?>
@@ -243,7 +243,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if(isset($character_data['Цвет бороды']) && $character_data['Цвет бороды'] === 'розовый'): ?>               
                     beardColor = '#ff6edbff'; 
                 <?php endif; ?>
-                
                 
                 playerCtx.fillStyle = bodyColor;
                 playerCtx.fillRect(8, 8, 16, 16);
@@ -275,9 +274,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 playerCtx.fillRect(17, 22, 7, 3);
                 
                 playerTexture.refresh();
+
+                // Текстура для NPC (Мастер C#)
+                const npcTexture = this.textures.createCanvas('npc', tileSize, tileSize);
+                const npcCtx = npcTexture.getContext();
+                
+                // Тело NPC (фиолетовый плащ для C#)
+                npcCtx.fillStyle = '#e25a00ff';
+                npcCtx.fillRect(6, 6, 20, 18);
+                
+                // Голова
+                npcCtx.fillStyle = '#ffd09aff';
+                npcCtx.fillRect(12, 4, 8, 8);
+                
+                // Волосы 
+                npcCtx.fillStyle = '#110e0eff';
+                npcCtx.fillRect(10, 2, 12, 4);
+                
+                // Глаза
+                npcCtx.fillStyle = '#8acbffff';
+                npcCtx.fillRect(13, 7, 2, 2);
+                npcCtx.fillRect(17, 7, 2, 2);
+                
+                // Руки
+                npcCtx.fillStyle = '#ce8600ff';
+                npcCtx.fillRect(3, 7, 4, 14);
+                npcCtx.fillStyle = '#ce8600ff';
+                npcCtx.fillRect(25, 7, 4, 14);
+
+                //Ноги
+                npcCtx.fillStyle = '#14130eff';
+                npcCtx.fillRect(6, 21, 8, 4);
+                npcCtx.fillStyle = '#14130eff';
+                npcCtx.fillRect(18, 21, 8, 4);
+                
+                // Декоративные элементы (символы C#)
+                npcCtx.fillStyle = '#d81900ff';
+                npcCtx.fillRect(8, 14, 3, 1); // #
+                npcCtx.fillRect(10, 13, 1, 3); // #
+                npcCtx.fillRect(21, 14, 3, 1); // #
+                npcCtx.fillRect(23, 13, 1, 3); // #
+                
+                npcTexture.refresh();
             }
         
-create() {
+            create() {
                 this.mapData = [
                     [0, 0, 0, 4, 0, 4, 0, 0, 4, 0, 0, 4, 0, 0, 5, 5, 0, 4, 4, 2],
                     [0, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 5, 5, 4, 0, 4, 2],
@@ -296,7 +337,7 @@ create() {
                     [2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 4, 4, 4, 2]
                 ];
 
-              
+                // Отрисовываем карту
                 for (let y = 0; y < this.mapData.length; y++) {
                     for (let x = 0; x < this.mapData[y].length; x++) {
                         const tileType = this.mapData[y][x];
@@ -315,10 +356,10 @@ create() {
                     }
                 }
 
-       
+                // Создаем физические объекты для коллизий
                 this.collisionLayer = this.physics.add.staticGroup();
 
-           
+                // Добавляем коллизии для воды (тип 1) и гор (тип 2)
                 for (let y = 0; y < this.mapData.length; y++) {
                     for (let x = 0; x < this.mapData[y].length; x++) {
                         const tileType = this.mapData[y][x];
@@ -334,14 +375,29 @@ create() {
                     }
                 }
 
-              
+                // Создаем персонажа
                 const startPixelX = this.playerStartX * this.tileSize + this.tileSize/2;
                 const startPixelY = this.playerStartY * this.tileSize + this.tileSize/2;
                 
                 this.player = this.physics.add.sprite(startPixelX, startPixelY, 'player');
                 this.player.setCollideWorldBounds(true);
 
+                // Добавляем NPC (Мастер C#) - располагаем его на координатах 8, 6
+                this.npc = this.physics.add.sprite(8 * this.tileSize + this.tileSize/2, 6 * this.tileSize + this.tileSize/2, 'npc');
+                this.npc.setImmovable(true);
+
+                // Добавляем коллизии
                 this.physics.add.collider(this.player, this.collisionLayer);
+                this.physics.add.collider(this.player, this.npc, this.interactWithNPC, null, this);
+
+                // Текст для задания
+                this.questText = this.add.text(320, 400, '', {
+                    font: '14px Arial',
+                    fill: '#ffffff',
+                    backgroundColor: '#000000',
+                    padding: { x: 10, y: 5 },
+                    align: 'center'
+                }).setOrigin(0.5,0.7).setVisible(false);
 
                 this.add.text(160, 20, 'Шарповые поля', {
                     font: '16px Arial',
@@ -357,12 +413,18 @@ create() {
                     }
                 }).setOrigin(0.5);
 
-                
+                // Подсказка для игрока
+                this.add.text(320, 450, 'Подойдите к Кузнецу для получения задания', {
+                    font: '12px Arial',
+                    fill: '#d8bfd8'
+                }).setOrigin(0.5);
+
+                // Настройка управления
                 this.cursorKeys = this.input.keyboard.createCursorKeys();
             }
 
             update() {
-                
+                // Обработка перемещения персонажа
                 this.player.setVelocity(0);
 
                 if (this.cursorKeys.left.isDown) {
@@ -378,23 +440,85 @@ create() {
                 }
 
                 this.checkForLocationTransition();
+                this.checkNPCDistance();
             }
+
+            interactWithNPC() {
+                if (!this.questGiven) {
+                    this.giveQuest();
+                }
+            }
+
+            giveQuest() {
+                this.questGiven = true;
+                this.questActive = true;
+                
+                const questMessage = "Йоу, чувачок!\n\n" +
+                                   "Я - кузнец Ярик, но можешь называть меня просто YaRich.\n У меня короче есть темка одна.\n" +
+                                   "Долбанный снитчи заполоинил мою OG кузницу.\n С неё я начинал свой путь, она мне очень важна.\n\n" +
+                                   "Уничтожь сничтей в моей кузнице и вернись ко мне.\n" +
+                                   "Без награды я тебя не оставлю!\n\n" +
+                                   "Нажмите ПРОБЕЛ для принятия задания";
+                
+                this.showQuestText(questMessage);
+                
+                // Добавляем обработчик клавиши пробела
+                this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+            }
+
+            showQuestText(text) {
+                this.questText.setText(text);
+                this.questText.setVisible(true);
+            }
+
+            hideQuestText() {
+                this.questText.setVisible(false);
+            }
+
+            checkNPCDistance() {
+                if (this.questText.visible && this.spaceKey && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+                    this.acceptQuest();
+                }
+
+                // Автоматически скрываем текст, если игрок отошел от NPC
+                const distance = Phaser.Math.Distance.Between(
+                    this.player.x, this.player.y,
+                    this.npc.x, this.npc.y
+                );
+
+                if (distance > 80 && this.questText.visible && !this.questGiven) {
+                    this.hideQuestText();
+                }
+            }
+
+            acceptQuest() {
+                this.hideQuestText();
+                
+                // Показываем подтверждение принятия задания
+                const acceptMessage = "Задание принято!\n\n" +
+                                    "Цель: Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль.\n" +
+                                    "Вернитесь к YaRich после выполнения";
+                
+                this.showQuestText(acceptMessage);
+                
+                // Через 3 секунды скрываем сообщение
+                this.time.delayedCall(3000, () => {
+                    this.hideQuestText();
+                });
+            }
+
             checkForLocationTransition() {
-              
                 const pathTopRow = 13;
                 const pathStartCol = 14;
                 const pathEndCol = 15;
                 
-                
                 const playerTileX = Math.floor(this.player.x / this.tileSize);
                 const playerTileY = Math.floor(this.player.y / this.tileSize);
-                
                 
                 if (playerTileY === pathTopRow && 
                     playerTileX >= pathStartCol && 
                     playerTileX <= pathEndCol) {
                     
-                   
                     window.location.href = 'index.php'; 
                 }
             }
