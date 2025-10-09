@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             letter-spacing: 3px;
         }
         .instructions {
-            margin-top: 210px;
+            margin-top: 120px;
             margin-left: 20px;
             color: #fff;
             text-shadow: 0 0 10px #ffffffff, 2px 2px 0 #000;

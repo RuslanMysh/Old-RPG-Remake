@@ -55,12 +55,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             letter-spacing: 3px;
         }
         .instructions {
-            color: #ffffffff;
+            margin-top: 80px;
+            margin-left: 0px;
+            color: #fff;
+            text-shadow: 0 0 10px #ffffffff, 2px 2px 0 #000;
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #ffffffff;
+            max-width: 600px;
+            font-size: 16px;
             text-align: center;
-            margin-top: 20%;
-            font-size: 1rem;
-            max-width: 320px;
-            line-height: 1.4;
+            z-index: 1000;
         }
         .container {
             display: flex;
@@ -106,11 +112,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .character-data strong {
             color: #ffffffff;
         }
+        .quest-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ffd700;
+            max-width: 300px;
+            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+        
+        .quest-info h2 {
+            color: #ffd700;
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.2rem;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+        }
+        
+        .quest-info p {
+            margin: 8px 0;
+            line-height: 1.4;
+            font-size: 0.9rem;
+        }
+        
+        .quest-info .quest-title {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .quest-info .quest-objective {
+            color: #4ecdc4;
+        }
+        
+        .quest-info .quest-reward {
+            color: #ffe66d;
+            font-style: italic;
+        }
     </style>
 </head>
 <body id="body">
     <div class="container">
         <p class="instructions">Вы прибыли на Шарповые поля. Здесь живут опытные программисты C#.</p>
+    </div>
+    <div id="questInfo" class="quest-info" style="display: none;">
+        <h2>АКТИВНОЕ ЗАДАНИЕ</h2>
+        <p class="quest-title">Очистка кузницы от снитчей</p>
+        <p class="quest-objective">Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль</p>
+        <p class="quest-reward">Награда: обещана YaRich'ом</p>
     </div>
 
     <?php if (isset($character_data)): ?>
@@ -138,6 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 this.questGiven = false;
                 this.questText = null;
                 this.questActive = false;
+                this.currentQuest = null;
 
                 this.playerStartX = 14; 
                 this.playerStartY = 11; 
@@ -494,6 +550,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             acceptQuest() {
                 this.hideQuestText();
                 
+                // Сохраняем информацию о задании в переменную
+                this.currentQuest = {
+                    title: "Очистка кузницы от снитчей",
+                    objective: "Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль",
+                    reward: "Награда: обещана YaRich'ом",
+                    giver: "YaRich (Кузнец Ярик)",
+                    status: "Активно"
+                };
+                
                 // Показываем подтверждение принятия задания
                 const acceptMessage = "Задание принято!\n\n" +
                                     "Цель: Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль.\n" +
@@ -501,10 +566,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 this.showQuestText(acceptMessage);
                 
-                // Через 3 секунды скрываем сообщение
+                // Через 3 секунды скрываем сообщение и показываем постоянную панель задания
                 this.time.delayedCall(3000, () => {
                     this.hideQuestText();
+                    this.showQuestPanel();
                 });
+            }
+
+            showQuestPanel() {
+                // Показываем красивую панель с информацией о задании
+                const questInfo = document.getElementById('questInfo');
+                if (questInfo) {
+                    questInfo.style.display = 'block';
+                }
             }
 
             checkForLocationTransition() {
