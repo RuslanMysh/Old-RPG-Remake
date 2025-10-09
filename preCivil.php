@@ -192,24 +192,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         
         class ZeldaScene extends Phaser.Scene {
-            constructor() {
-                super({ key: 'ZeldaScene' });
-                this.player = null;
-                this.cursorKeys = null;
-                this.mapData = null;
-                this.tileSize = 32;
-                this.collisionLayer = null;
-                this.rats = [];
-                this.playerHealth = 100;
-                this.playerMaxHealth = 100;
-                this.attackCooldown = 0;
-                this.attackKey = null;
-                this.isAttacking = false;
-                this.attackArea = null;
+        constructor() {
+            super({ key: 'ZeldaScene' });
+            this.player = null;
+            this.cursorKeys = null;
+            this.mapData = null;
+            this.tileSize = 32;
+            this.collisionLayer = null;
+            this.rats = [];
+            this.playerHealth = 100;
+            this.playerMaxHealth = 100;
+            this.attackCooldown = 0;
+            this.attackKey = null;
+            this.isAttacking = false;
+            this.attackArea = null;
+            this.regenCooldown = 0; // Таймер для регенерации
+            this.lastDamageTime = 0; // Время последнего получения урона
 
-                this.playerStartX = 5; 
-                this.playerStartY = 1; 
-            }
+            this.playerStartX = 5; 
+            this.playerStartY = 1; 
+        }
 
             preload() {
                 
@@ -360,7 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Уши
                 ratCtx.fillStyle = '#FF69B4';
                 ratCtx.beginPath();
-                ratCtx.arc(8, 6, 3, 0, Math.PI * 2);
+                ratCtx.arc(5, 6, 3, 0, Math.PI * 2);
                 ratCtx.fill();
                 ratCtx.beginPath();
                 ratCtx.arc(12, 6, 3, 0, Math.PI * 2);
@@ -392,181 +394,238 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 attackTexture.refresh();
             }
         
-            create() {
-                this.mapData = [
-                    [2, 2, 2, 2, 4, 5, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-                    [2, 2, 2, 2, 0, 5, 0, 4, 4, 0, 4, 4, 4, 0, 4, 2, 2, 2, 2, 2],
-                    [2, 2, 2, 0, 0, 5, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 2, 2, 2, 2],
-                    [2, 2, 0, 4, 0, 5, 5, 0, 0, 4, 0, 0, 0, 0, 2, 0, 0, 2, 2, 2],
-                    [2, 4, 0, 2, 0, 5, 5, 5, 0, 0, 0, 0, 6, 6, 2, 2, 0, 0, 2, 2],
-                    [2, 0, 0, 2, 0, 0, 5, 5, 5, 0, 4, 0, 6, 7, 6, 2, 2, 0, 0, 2],
-                    [2, 2, 0, 0, 0, 0, 0, 5, 5, 5, 0, 4, 0, 7, 7, 6, 2, 2, 0, 2],
-                    [2, 2, 2, 0, 4, 0, 4, 0, 5, 5, 5, 0, 0, 0, 7, 7, 6, 0, 0, 2],
-                    [2, 2, 2, 2, 0, 0, 0, 4, 0, 5, 5, 5, 0, 0, 6, 6, 6, 0, 0, 2],
-                    [2, 2, 2, 2, 0, 4, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 4, 0, 2],
-                    [2, 2, 2, 2, 2, 0, 0, 0, 4, 0, 0, 5, 5, 5, 0, 0, 0, 0, 4, 2],
-                    [2, 2, 2, 2, 2, 2, 0, 4, 0, 0, 0, 4, 5, 5, 5, 0, 0, 4, 0, 2],
-                    [2, 2, 2, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 5, 5, 5, 4, 0, 0, 2],
-                    [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 4, 2],
-                    [2, 2, 2, 2, 2, 0, 0, 4, 4, 0, 4, 0, 0, 0, 5, 5, 0, 0, 0, 2]
-                ];
+             create() {
+            this.mapData = [
+                [2, 2, 2, 2, 4, 5, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+                [2, 2, 2, 2, 0, 5, 0, 4, 4, 0, 4, 4, 4, 0, 4, 2, 2, 2, 2, 2],
+                [2, 2, 2, 0, 0, 5, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 2, 2, 2, 2],
+                [2, 2, 0, 4, 0, 5, 5, 0, 0, 4, 0, 0, 0, 0, 2, 0, 0, 2, 2, 2],
+                [2, 4, 0, 2, 0, 5, 5, 5, 0, 0, 0, 0, 6, 6, 2, 2, 0, 0, 2, 2],
+                [2, 0, 0, 2, 0, 0, 5, 5, 5, 0, 4, 0, 6, 7, 6, 2, 2, 0, 0, 2],
+                [2, 2, 0, 0, 0, 0, 0, 5, 5, 5, 0, 4, 0, 7, 7, 6, 2, 2, 0, 2],
+                [2, 2, 2, 0, 4, 0, 4, 0, 5, 5, 5, 0, 0, 0, 7, 7, 6, 0, 0, 2],
+                [2, 2, 2, 2, 0, 0, 0, 4, 0, 5, 5, 5, 0, 0, 6, 6, 6, 0, 0, 2],
+                [2, 2, 2, 2, 0, 4, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 4, 0, 2],
+                [2, 2, 2, 2, 2, 0, 0, 0, 4, 0, 0, 5, 5, 5, 0, 0, 0, 0, 4, 2],
+                [2, 2, 2, 2, 2, 2, 0, 4, 0, 0, 0, 4, 5, 5, 5, 0, 0, 4, 0, 2],
+                [2, 2, 2, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 5, 5, 5, 4, 0, 0, 2],
+                [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 4, 2],
+                [2, 2, 2, 2, 2, 0, 0, 4, 4, 0, 4, 0, 0, 0, 5, 5, 0, 0, 0, 2]
+            ];
 
-                // Отрисовываем карту
-                for (let y = 0; y < this.mapData.length; y++) {
-                    for (let x = 0; x < this.mapData[y].length; x++) {
-                        const tileType = this.mapData[y][x];
-                        let textureKey = 'grass';
-                        
-                        switch (tileType) {
-                            case 0: textureKey = 'grass'; break;
-                            case 1: textureKey = 'water'; break;
-                            case 2: textureKey = 'mountain'; break;
-                            case 3: textureKey = 'sand'; break;
-                            case 4: textureKey = 'forest'; break;
-                            case 5: textureKey = 'path'; break;
-                            case 6: textureKey = 'oldWood'; break;
-                            case 7: textureKey = 'oldWoodFloor'; break;
-                        }
-                        
-                        this.add.image(x * this.tileSize + this.tileSize/2, y * this.tileSize + this.tileSize/2, textureKey);
-                    }
-                }
-
-                // Создаем физические объекты для коллизий
-                this.collisionLayer = this.physics.add.staticGroup();
-
-                // Добавляем коллизии для воды (тип 1) и гор (тип 2)
-                for (let y = 0; y < this.mapData.length; y++) {
-                    for (let x = 0; x < this.mapData[y].length; x++) {
-                        const tileType = this.mapData[y][x];
-                        if (tileType === 1 || tileType === 2 || tileType === 6) { 
-                            const collisionRect = this.collisionLayer.create(
-                                x * this.tileSize + this.tileSize/2, 
-                                y * this.tileSize + this.tileSize/2, 
-                                null
-                            );
-                            collisionRect.setSize(this.tileSize, this.tileSize);
-                            collisionRect.setVisible(false);
-                        }
-                    }
-                }
-
-                // Создаем персонажа
-                const startPixelX = this.playerStartX * this.tileSize + this.tileSize/2;
-                const startPixelY = this.playerStartY * this.tileSize + this.tileSize/2;
-                
-                this.player = this.physics.add.sprite(startPixelX, startPixelY, 'player');
-                this.player.setCollideWorldBounds(true);
-
-                // Создаем зону атаки (изначально невидима)
-                this.attackArea = this.add.rectangle(0, 0, this.tileSize, this.tileSize, 0xFF0000, 0.3);
-                this.attackArea.setVisible(false);
-
-                // Создаем крыс-врагов
-                this.createRats();
-
-                // Добавляем коллизии
-                this.physics.add.collider(this.player, this.collisionLayer);
-                this.physics.add.collider(this.rats, this.collisionLayer);
-                this.physics.add.overlap(this.player, this.rats, this.playerHit, null, this);
-                this.physics.add.overlap(this.attackArea, this.rats, this.attackRat, null, this);
-
-                // Обновляем отображение здоровья в HTML
-                this.updateHealthDisplay();
-
-                this.add.text(90, 10, 'ПРИГОРОД ЦИВИЛЬ', {
-                    font: '16px Arial',
-                    fill: '#00aeffff',
-                    stroke: '#eaf6ffff',
-                    strokeThickness: 4,
-                    shadow: {
-                        offsetX: 2,
-                        offsetY: 2,
-                        color: '#000000ff',
-                        blur: 0,
-                        stroke: true
-                    }
-                }).setOrigin(0.5);
-
-                // Настройка управления
-                this.cursorKeys = this.input.keyboard.createCursorKeys();
-                this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-            }
-
-            createRats() {
-                this.rats = this.physics.add.group();
-                
-                // Создаем несколько крыс в разных местах карты
-                const ratPositions = [
-                    {x: 8, y: 3},
-                    {x: 12, y: 5},
-                    {x: 6, y: 8},
-                    {x: 14, y: 10}
-                ];
-                
-                ratPositions.forEach(pos => {
-                    const rat = this.rats.create(
-                        pos.x * this.tileSize + this.tileSize/2,
-                        pos.y * this.tileSize + this.tileSize/2,
-                        'rat'
-                    );
+            // Отрисовываем карту
+            for (let y = 0; y < this.mapData.length; y++) {
+                for (let x = 0; x < this.mapData[y].length; x++) {
+                    const tileType = this.mapData[y][x];
+                    let textureKey = 'grass';
                     
-                    // Настройки крысы
-                    rat.setCollideWorldBounds(true);
-                    rat.health = 30;
-                    rat.speed = 50;
-                    rat.attackCooldown = 0;
-                    rat.damage = 10;
-                });
+                    switch (tileType) {
+                        case 0: textureKey = 'grass'; break;
+                        case 1: textureKey = 'water'; break;
+                        case 2: textureKey = 'mountain'; break;
+                        case 3: textureKey = 'sand'; break;
+                        case 4: textureKey = 'forest'; break;
+                        case 5: textureKey = 'path'; break;
+                        case 6: textureKey = 'oldWood'; break;
+                        case 7: textureKey = 'oldWoodFloor'; break;
+                    }
+                    
+                    this.add.image(x * this.tileSize + this.tileSize/2, y * this.tileSize + this.tileSize/2, textureKey);
+                }
             }
 
-            update() {
-                // Обработка перемещения персонажа
-                this.player.setVelocity(0);
+            // Создаем физические объекты для коллизий
+            this.collisionLayer = this.physics.add.staticGroup();
 
-                if (this.cursorKeys.left.isDown) {
-                    this.player.setVelocityX(-100);
-                } else if (this.cursorKeys.right.isDown) {
-                    this.player.setVelocityX(100);
+            // Добавляем коллизии для воды (тип 1) и гор (тип 2)
+            for (let y = 0; y < this.mapData.length; y++) {
+                for (let x = 0; x < this.mapData[y].length; x++) {
+                    const tileType = this.mapData[y][x];
+                    if (tileType === 1 || tileType === 2 || tileType === 6) { 
+                        const collisionRect = this.collisionLayer.create(
+                            x * this.tileSize + this.tileSize/2, 
+                            y * this.tileSize + this.tileSize/2, 
+                            null
+                        );
+                        collisionRect.setSize(this.tileSize, this.tileSize);
+                        collisionRect.setVisible(false);
+                    }
                 }
-
-                if (this.cursorKeys.up.isDown) {
-                    this.player.setVelocityY(-100);
-                } else if (this.cursorKeys.down.isDown) {
-                    this.player.setVelocityY(100);
-                }
-
-                // Обработка атаки
-                if (this.attackKey.isDown && this.attackCooldown <= 0) {
-                    this.attack();
-                }
-
-                // Обновление кулдауна атаки
-                if (this.attackCooldown > 0) {
-                    this.attackCooldown--;
-                }
-
-                // Движение крыс к игроку
-                this.moveRats();
-
-                this.checkForLocationTransition();
             }
 
-            attack() {
-                // Устанавливаем кулдаун атаки
-                this.attackCooldown = 30; // 0.5 секунды при 60 FPS
+            // Создаем персонажа
+            const startPixelX = this.playerStartX * this.tileSize + this.tileSize/2;
+            const startPixelY = this.playerStartY * this.tileSize + this.tileSize/2;
+            
+            this.player = this.physics.add.sprite(startPixelX, startPixelY, 'player');
+            this.player.setCollideWorldBounds(true);
+
+            // Создаем зону атаки как физический спрайт
+            this.attackArea = this.physics.add.sprite(0, 0, 'attack');
+            this.attackArea.setVisible(false);
+            this.attackArea.setActive(false);
+            this.attackArea.body.setSize(this.tileSize, this.tileSize);
+
+            // Создаем крыс-врагов
+            this.createRats();
+
+            // Добавляем коллизии
+            this.physics.add.collider(this.player, this.collisionLayer);
+            this.physics.add.collider(this.rats, this.collisionLayer);
+            this.physics.add.overlap(this.player, this.rats, this.playerHit, null, this);
+            
+            // Добавляем overlap для зоны атаки и крыс
+            this.physics.add.overlap(this.attackArea, this.rats, this.attackRat, null, this);
+
+            // Обновляем отображение здоровья в HTML
+            this.updateHealthDisplay();
+
+            this.add.text(90, 10, 'ПРИГОРОД ЦИВИЛЬ', {
+                font: '16px Arial',
+                fill: '#00aeffff',
+                stroke: '#eaf6ffff',
+                strokeThickness: 4,
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 2,
+                    color: '#000000ff',
+                    blur: 0,
+                    stroke: true
+                }
+            }).setOrigin(0.5);
+
+            // Настройка управления
+            this.cursorKeys = this.input.keyboard.createCursorKeys();
+            this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+            // Инициализация таймера регенерации
+            this.lastDamageTime = this.time.now;
+            this.regenCooldown = 0;
+        }
+
+        createRats() {
+            this.rats = this.physics.add.group();
+            
+            // Создаем несколько крыс в разных местах карты
+            const ratPositions = [
+                {x: 8, y: 3},
+                {x: 12, y: 5},
+                {x: 6, y: 8},
+                {x: 14, y: 10}
+            ];
+            
+            ratPositions.forEach(pos => {
+                const rat = this.rats.create(
+                    pos.x * this.tileSize + this.tileSize/2,
+                    pos.y * this.tileSize + this.tileSize/2,
+                    'rat'
+                );
                 
-                // Показываем зону атаки
-                this.attackArea.setPosition(this.player.x, this.player.y);
-                this.attackArea.setVisible(true);
-                
-                // Через 200ms скрываем зону атаки
-                this.time.delayedCall(200, () => {
-                    this.attackArea.setVisible(false);
-                });
+                // Настройки крысы
+                rat.setCollideWorldBounds(true);
+                rat.health = 10;
+                rat.speed = 5;
+                rat.attackCooldown = 2;
+                rat.damage = 10;
+                rat.receivedDamage = false; // Флаг получения урона от текущей атаки
+            });
+        }
+
+        update() {
+            // Обработка перемещения персонажа
+            this.player.setVelocity(0);
+
+            if (this.cursorKeys.left.isDown) {
+                this.player.setVelocityX(-100);
+            } else if (this.cursorKeys.right.isDown) {
+                this.player.setVelocityX(100);
             }
 
-            attackRat(attackArea, rat) {
+            if (this.cursorKeys.up.isDown) {
+                this.player.setVelocityY(-100);
+            } else if (this.cursorKeys.down.isDown) {
+                this.player.setVelocityY(100);
+            }
+
+            // Обработка атаки
+            if (this.attackKey.isDown && this.attackCooldown <= 0) {
+                this.attack();
+            }
+
+            // Обновление кулдауна атаки
+            if (this.attackCooldown > 0) {
+                this.attackCooldown--;
+            }
+
+            // Движение крыс к игроку
+            this.moveRats();
+
+            // Авторегенерация здоровья
+            this.autoRegenerateHealth();
+
+            this.checkForLocationTransition();
+        }
+
+        // НОВЫЙ МЕТОД: Авторегенерация здоровья
+        autoRegenerateHealth() {
+            const currentTime = this.time.now;
+            
+            // Если прошло 3 секунды после последнего получения урона и здоровье не полное
+            if (currentTime - this.lastDamageTime > 3000 && this.playerHealth < this.playerMaxHealth) {
+                // Уменьшаем кулдаун регенерации
+                if (this.regenCooldown <= 0) {
+                    // Восстанавливаем здоровье
+                    this.playerHealth = Math.min(this.playerHealth + 2, this.playerMaxHealth);
+                    
+                    // Обновляем отображение здоровья
+                    this.updateHealthDisplay();
+                    
+                    // Визуальный эффект регенерации (легкое зеленое свечение)
+                    this.player.setTint(0x00FF00);
+                    this.time.delayedCall(100, () => {
+                        this.player.clearTint();
+                    });
+                    
+                    // Устанавливаем кулдаун регенерации (1 секунда)
+                    this.regenCooldown = 60;
+                } else {
+                    this.regenCooldown--;
+                }
+            } else {
+                // Сбрасываем кулдаун регенерации, если условие не выполняется
+                this.regenCooldown = 0;
+            }
+        }
+
+        attack() {
+            // Устанавливаем кулдаун атаки
+            this.attackCooldown = 30; // 0.5 секунды при 60 FPS
+            
+            // Сбрасываем флаги получения урона у всех крыс
+            this.rats.getChildren().forEach(rat => {
+                if (rat.active) {
+                    rat.receivedDamage = false;
+                }
+            });
+            
+            // Активируем зону атаки
+            this.attackArea.setPosition(this.player.x, this.player.y);
+            this.attackArea.setVisible(true);
+            this.attackArea.setActive(true);
+            
+            // Через 200ms скрываем зону атаки
+            this.time.delayedCall(200, () => {
+                this.attackArea.setVisible(false);
+                this.attackArea.setActive(false);
+            });
+        }
+
+        attackRat(attackArea, rat) {
+            // Проверяем, не получала ли уже эта крыса урон от текущей атаки
+            if (!rat.receivedDamage) {
+                // Помечаем, что крыса получила урон от этой атаки
+                rat.receivedDamage = true;
+                
                 // Наносим урон крысе
                 rat.health -= 20;
                 
@@ -580,138 +639,149 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (rat.health <= 0) {
                     rat.destroy();
                 }
-            }
-
-            playerHit(player, rat) {
-                // Проверяем кулдаун атаки крысы
-                if (rat.attackCooldown <= 0) {
-                    // Наносим урон игроку
-                    this.playerHealth -= rat.damage;
-                    
-                    // Обновляем отображение здоровья в HTML
-                    this.updateHealthDisplay();
-                    
-                    // Эффект получения урона
-                    player.setTint(0xFF0000);
-                    this.time.delayedCall(200, () => {
-                        player.clearTint();
-                    });
-                    
-                    // Устанавливаем кулдаун атаки крысы
-                    rat.attackCooldown = 60; // 1 секунда при 60 FPS
-                    
-                    // Проверяем смерть игрока
-                    if (this.playerHealth <= 0) {
-                        this.gameOver();
-                    }
-                }
                 
-                // Обновляем кулдаун атаки крысы
-                if (rat.attackCooldown > 0) {
-                    rat.attackCooldown--;
-                }
-            }
-
-            moveRats() {
-                this.rats.getChildren().forEach(rat => {
+                // Сбрасываем флаг получения урона через небольшое время
+                this.time.delayedCall(100, () => {
                     if (rat.active) {
-                        // Вычисляем направление к игроку
-                        const angle = Phaser.Math.Angle.Between(
-                            rat.x, rat.y,
-                            this.player.x, this.player.y
-                        );
-                        
-                        // Двигаем крысу к игроку
-                        rat.setVelocity(
-                            Math.cos(angle) * rat.speed,
-                            Math.sin(angle) * rat.speed
-                        );
-                        
-                        // Обновляем кулдаун атаки крысы
-                        if (rat.attackCooldown > 0) {
-                            rat.attackCooldown--;
-                        }
+                        rat.receivedDamage = false;
                     }
                 });
-            }
-
-            updateHealthDisplay() {
-                // Обновляем текст здоровья
-                document.getElementById('health-text').textContent = `Здоровье: ${this.playerHealth}/${this.playerMaxHealth}`;
-                
-                // Обновляем полоску здоровья
-                const healthPercent = (this.playerHealth / this.playerMaxHealth) * 100;
-                document.getElementById('health-bar').style.width = `${healthPercent}%`;
-                
-                // Меняем цвет полоски в зависимости от здоровья
-                const healthBar = document.getElementById('health-bar');
-                if (healthPercent > 70) {
-                    healthBar.style.background = 'linear-gradient(to right, #00ff00, #80ff00)';
-                } else if (healthPercent > 30) {
-                    healthBar.style.background = 'linear-gradient(to right, #ffff00, #ff8000)';
-                } else {
-                    healthBar.style.background = 'linear-gradient(to right, #ff0000, #ff4000)';
-                }
-            }
-
-            gameOver() {
-                // Останавливаем игру
-                this.physics.pause();
-                this.player.setTint(0xFF0000);
-                
-                // Показываем сообщение о Game Over
-                const gameOverText = this.add.text(320, 240, 'ВЫ ПОГИБЛИ!\nНажмите R для перезапуска', {
-                    font: '24px Arial',
-                    fill: '#ff0000',
-                    align: 'center'
-                }).setOrigin(0.5);
-                
-                // Добавляем возможность перезапуска
-                this.input.keyboard.once('keydown-R', () => {
-                   window.location.href = 'sims4.php'; 
-                });
-            }
-
-            checkForLocationTransition() {
-                const pathTopRow = 13;
-                const pathStartCol = 14;
-                const pathEndCol = 15;
-                
-                const playerTileX = Math.floor(this.player.x / this.tileSize);
-                const playerTileY = Math.floor(this.player.y / this.tileSize);
-                
-                if (playerTileY === pathTopRow && 
-                    playerTileX >= pathStartCol && 
-                    playerTileX <= pathEndCol) {
-                    
-                    window.location.href = 'index.php'; 
-                }
             }
         }
 
-        const config = {
-            type: Phaser.AUTO,
-            width: 640,
-            height: 480,
-            backgroundColor: '#000000',
-            scene: ZeldaScene,
-            scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH
-            },
-            render: {
-                pixelArt: false
-            },
-            physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: 0 },
-                    debug: false
+        playerHit(player, rat) {
+            // Проверяем кулдаун атаки крысы
+            if (rat.attackCooldown <= 0) {
+                // Наносим урон игроку
+                this.playerHealth -= rat.damage;
+                
+                // Обновляем время последнего получения урона
+                this.lastDamageTime = this.time.now;
+                
+                // Обновляем отображение здоровья в HTML
+                this.updateHealthDisplay();
+                
+                // Эффект получения урона
+                player.setTint(0xFF0000);
+                this.time.delayedCall(200, () => {
+                    player.clearTint();
+                });
+                
+                // Устанавливаем кулдаун атаки крысы
+                rat.attackCooldown = 60; // 1 секунда при 60 FPS
+                
+                // Проверяем смерть игрока
+                if (this.playerHealth <= 0) {
+                    this.gameOver();
                 }
             }
-        };
+            
+            // Обновляем кулдаун атаки крысы
+            if (rat.attackCooldown > 0) {
+                rat.attackCooldown--;
+            }
+        }
 
-        const game = new Phaser.Game(config);
-    </script>
+        moveRats() {
+            this.rats.getChildren().forEach(rat => {
+                if (rat.active) {
+                    // Вычисляем направление к игроку
+                    const angle = Phaser.Math.Angle.Between(
+                        rat.x, rat.y,
+                        this.player.x, this.player.y
+                    );
+                    
+                    // Двигаем крысу к игроку
+                    rat.setVelocity(
+                        Math.cos(angle) * rat.speed,
+                        Math.sin(angle) * rat.speed
+                    );
+                    
+                    // Обновляем кулдаун атаки крысы
+                    if (rat.attackCooldown > 0) {
+                        rat.attackCooldown--;
+                    }
+                }
+            });
+        }
+
+        updateHealthDisplay() {
+            // Обновляем текст здоровья
+            document.getElementById('health-text').textContent = `Здоровье: ${this.playerHealth}/${this.playerMaxHealth}`;
+            
+            // Обновляем полоску здоровья
+            const healthPercent = (this.playerHealth / this.playerMaxHealth) * 100;
+            document.getElementById('health-bar').style.width = `${healthPercent}%`;
+            
+            // Меняем цвет полоски в зависимости от здоровья
+            const healthBar = document.getElementById('health-bar');
+            if (healthPercent > 70) {
+                healthBar.style.background = 'linear-gradient(to right, #00ff00, #80ff00)';
+            } else if (healthPercent > 30) {
+                healthBar.style.background = 'linear-gradient(to right, #ffff00, #ff8000)';
+            } else {
+                healthBar.style.background = 'linear-gradient(to right, #ff0000, #ff4000)';
+            }
+        }
+
+        gameOver() {
+            // Останавливаем игру
+            this.physics.pause();
+            this.player.setTint(0xFF0000);
+            
+            // Показываем сообщение о Game Over
+            const gameOverText = this.add.text(320, 240, 'ВЫ ПОГИБЛИ!\nНажмите R для перезапуска', {
+                font: '24px Arial',
+                fill: '#ff0000',
+                align: 'center'
+            }).setOrigin(0.5);
+            
+            // Добавляем возможность перезапуска
+            this.input.keyboard.once('keydown-R', () => {
+               window.location.href = 'sims4.php'; 
+            });
+        }
+
+        checkForLocationTransition() {
+            const pathTopRow = 13;
+            const pathStartCol = 14;
+            const pathEndCol = 15;
+            
+            const playerTileX = Math.floor(this.player.x / this.tileSize);
+            const playerTileY = Math.floor(this.player.y / this.tileSize);
+            
+            if (playerTileY === pathTopRow && 
+                playerTileX >= pathStartCol && 
+                playerTileX <= pathEndCol) {
+                
+                window.location.href = 'index.php'; 
+            }
+        }
+    }
+
+    const config = {
+        type: Phaser.AUTO,
+        width: 640,
+        height: 480,
+        backgroundColor: '#000000',
+        scene: ZeldaScene,
+        scale: {
+            mode: Phaser.Scale.FIT,
+            autoCenter: Phaser.Scale.CENTER_BOTH
+        },
+        render: {
+            pixelArt: false
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+</script>
 </body>
 </html>
