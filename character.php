@@ -53,15 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .instructions {
             margin-top: 210px;
-            left: 20px;
+            margin-left: 20px;
             color: #fff;
             text-shadow: 0 0 10px #ffffffff, 2px 2px 0 #000;
             font-family: Arial, sans-serif;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 15px;
             border: 2px solid #ffffffff;
             max-width: 600px;
             font-size: 16px;
+            text-align: center;
+            z-index: 1000;
         }
         .container {
             display: flex;
@@ -122,6 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <?php endif; ?>
 
-    <div class="container">
+    <div>
         <p class="instructions">Вас принесло сюда течение реки, в которую вы упали, когда повозка с заключёнными было опракинута. Вам нужно найти поселение. Для начала, исследуйте местность.</p>
     </div>
