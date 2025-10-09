@@ -106,11 +106,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .character-data strong {
             color: #ffffffff;
         }
+        
+        /* Стили для отображения здоровья */
+        .health-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ffffffff;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            min-width: 200px;
+        }
+        
+        .health-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .health-bar {
+            height: 100%;
+            background: linear-gradient(to right, #ff0000, #ffff00, #00ff00);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .health-text {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .combat-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.69);
+            z-index: 1000;
+            max-width: 300px;
+        }
     </style>
 </head>
 <body id="body">
     <div class="container">
-        <p class="instructions">Вы прибыли на Шарповые поля. Здесь живут опытные программисты C#.</p>
+        <p class="instructions">Вы прибыли в пригород Цивиль. Осторожно, здесь водятся крысы!</p>
     </div>
 
     <?php if (isset($character_data)): ?>
@@ -124,6 +174,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <?php endif; ?>
 
+    <!-- Отображение здоровья в HTML -->
+    <div class="health-display">
+        <div class="health-text" id="health-text">Здоровье: 100/100</div>
+        <div class="health-bar-container">
+            <div class="health-bar" id="health-bar" style="width: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- Информация о боях -->
+    <div class="combat-info">
+        <h3>Управление в бою:</h3>
+        <p>ПРОБЕЛ - атака</p>
+        <p>Стрелки - движение</p>
+    </div>
+
     <script>
         
         class ZeldaScene extends Phaser.Scene {
@@ -134,10 +199,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 this.mapData = null;
                 this.tileSize = 32;
                 this.collisionLayer = null;
-                this.npc = null;
-                this.questGiven = false;
-                this.questText = null;
-                this.questActive = false;
+                this.rats = [];
+                this.playerHealth = 100;
+                this.playerMaxHealth = 100;
+                this.attackCooldown = 0;
+                this.attackKey = null;
+                this.isAttacking = false;
+                this.attackArea = null;
 
                 this.playerStartX = 5; 
                 this.playerStartY = 1; 
@@ -277,66 +345,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 playerTexture.refresh();
 
-                // Текстура для NPC (Мастер C#)
-                const npcTexture = this.textures.createCanvas('npc', tileSize, tileSize);
-                const npcCtx = npcTexture.getContext();
+                // Текстура для крысы
+                const ratTexture = this.textures.createCanvas('rat', tileSize, tileSize);
+                const ratCtx = ratTexture.getContext();
                 
-                // Тело NPC (фиолетовый плащ для C#)
-                npcCtx.fillStyle = '#e25a00ff';
-                npcCtx.fillRect(6, 6, 20, 18);
+                // Тело крысы
+                ratCtx.fillStyle = '#818181ff';
+                ratCtx.fillRect(8, 12, 16, 8);
                 
                 // Голова
-                npcCtx.fillStyle = '#ffd09aff';
-                npcCtx.fillRect(12, 4, 8, 8);
+                ratCtx.fillStyle = 'rgba(112, 112, 112, 1)';
+                ratCtx.fillRect(4, 8, 8, 8);
                 
-                // Волосы 
-                npcCtx.fillStyle = '#110e0eff';
-                npcCtx.fillRect(10, 2, 12, 4);
+                // Уши
+                ratCtx.fillStyle = '#FF69B4';
+                ratCtx.beginPath();
+                ratCtx.arc(8, 6, 3, 0, Math.PI * 2);
+                ratCtx.fill();
+                ratCtx.beginPath();
+                ratCtx.arc(12, 6, 3, 0, Math.PI * 2);
+                ratCtx.fill();
                 
                 // Глаза
-                npcCtx.fillStyle = '#8acbffff';
-                npcCtx.fillRect(13, 7, 2, 2);
-                npcCtx.fillRect(17, 7, 2, 2);
+                ratCtx.fillStyle = '#FF0000';
+                ratCtx.fillRect(6, 10, 2, 2);
+                ratCtx.fillRect(10, 10, 2, 2);
                 
-                // Руки
-                npcCtx.fillStyle = '#ce8600ff';
-                npcCtx.fillRect(3, 7, 4, 14);
-                npcCtx.fillStyle = '#ce8600ff';
-                npcCtx.fillRect(25, 7, 4, 14);
+                // Хвост
+                ratCtx.strokeStyle = '#ff79f4ff';
+                ratCtx.lineWidth = 2;
+                ratCtx.beginPath();
+                ratCtx.moveTo(24, 16);
+                ratCtx.lineTo(30, 12);
+                ratCtx.stroke();
+                
+                ratTexture.refresh();
 
-                //Ноги
-                npcCtx.fillStyle = '#14130eff';
-                npcCtx.fillRect(6, 21, 8, 4);
-                npcCtx.fillStyle = '#14130eff';
-                npcCtx.fillRect(18, 21, 8, 4);
+                // Текстура для зоны атаки
+                const attackTexture = this.textures.createCanvas('attack', tileSize, tileSize);
+                const attackCtx = attackTexture.getContext();
                 
-                // Декоративные элементы (символы C#)
-                npcCtx.fillStyle = '#d81900ff';
-                npcCtx.fillRect(8, 14, 3, 1); // #
-                npcCtx.fillRect(10, 13, 1, 3); // #
-                npcCtx.fillRect(21, 14, 3, 1); // #
-                npcCtx.fillRect(23, 13, 1, 3); // #
+                attackCtx.fillStyle = '#FF0000';
+                attackCtx.globalAlpha = 0.5;
+                attackCtx.fillRect(0, 0, tileSize, tileSize);
                 
-                npcTexture.refresh();
+                attackTexture.refresh();
             }
         
             create() {
                 this.mapData = [
                     [2, 2, 2, 2, 4, 5, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-                    [2, 2, 2, 2, 0, 5, 0, 4, 4, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2],
-                    [2, 2, 2, 0, 0, 5, 0, 4, 0, 0, 4, 4, 0, 0, 0, 0, 2, 2, 2, 2],
-                    [2, 2, 0, 4, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 2, 2],
-                    [2, 0, 0, 2, 0, 5, 5, 5, 0, 0, 0, 0, 6, 6, 2, 2, 0, 0, 2, 2],
+                    [2, 2, 2, 2, 0, 5, 0, 4, 4, 0, 4, 4, 4, 0, 4, 2, 2, 2, 2, 2],
+                    [2, 2, 2, 0, 0, 5, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 2, 2, 2, 2],
+                    [2, 2, 0, 4, 0, 5, 5, 0, 0, 4, 0, 0, 0, 0, 2, 0, 0, 2, 2, 2],
+                    [2, 4, 0, 2, 0, 5, 5, 5, 0, 0, 0, 0, 6, 6, 2, 2, 0, 0, 2, 2],
                     [2, 0, 0, 2, 0, 0, 5, 5, 5, 0, 4, 0, 6, 7, 6, 2, 2, 0, 0, 2],
                     [2, 2, 0, 0, 0, 0, 0, 5, 5, 5, 0, 4, 0, 7, 7, 6, 2, 2, 0, 2],
-                    [2, 2, 2, 0, 0, 0, 4, 0, 5, 5, 5, 0, 0, 0, 7, 7, 6, 0, 0, 2],
+                    [2, 2, 2, 0, 4, 0, 4, 0, 5, 5, 5, 0, 0, 0, 7, 7, 6, 0, 0, 2],
                     [2, 2, 2, 2, 0, 0, 0, 4, 0, 5, 5, 5, 0, 0, 6, 6, 6, 0, 0, 2],
-                    [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0, 2],
-                    [2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 4, 2],
+                    [2, 2, 2, 2, 0, 4, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 4, 0, 2],
+                    [2, 2, 2, 2, 2, 0, 0, 0, 4, 0, 0, 5, 5, 5, 0, 0, 0, 0, 4, 2],
                     [2, 2, 2, 2, 2, 2, 0, 4, 0, 0, 0, 4, 5, 5, 5, 0, 0, 4, 0, 2],
                     [2, 2, 2, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 5, 5, 5, 4, 0, 0, 2],
                     [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 4, 2],
-                    [2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 4, 4, 4, 2]
+                    [2, 2, 2, 2, 2, 0, 0, 4, 4, 0, 4, 0, 0, 0, 5, 5, 0, 0, 0, 2]
                 ];
 
                 // Отрисовываем карту
@@ -367,7 +439,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 for (let y = 0; y < this.mapData.length; y++) {
                     for (let x = 0; x < this.mapData[y].length; x++) {
                         const tileType = this.mapData[y][x];
-                        if (tileType === 1 || tileType === 2) { 
+                        if (tileType === 1 || tileType === 2 || tileType === 6) { 
                             const collisionRect = this.collisionLayer.create(
                                 x * this.tileSize + this.tileSize/2, 
                                 y * this.tileSize + this.tileSize/2, 
@@ -385,25 +457,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 this.player = this.physics.add.sprite(startPixelX, startPixelY, 'player');
                 this.player.setCollideWorldBounds(true);
-/*
-                // Добавляем NPC (Мастер C#) - располагаем его на координатах 8, 6
-                this.npc = this.physics.add.sprite(8 * this.tileSize + this.tileSize/2, 6 * this.tileSize + this.tileSize/2, 'npc');
-                this.npc.setImmovable(true);
-*/
+
+                // Создаем зону атаки (изначально невидима)
+                this.attackArea = this.add.rectangle(0, 0, this.tileSize, this.tileSize, 0xFF0000, 0.3);
+                this.attackArea.setVisible(false);
+
+                // Создаем крыс-врагов
+                this.createRats();
+
                 // Добавляем коллизии
                 this.physics.add.collider(this.player, this.collisionLayer);
-                this.physics.add.collider(this.player, this.npc, this.interactWithNPC, null, this);
-/*
-                // Текст для задания
-                this.questText = this.add.text(320, 400, '', {
-                    font: '14px Arial',
-                    fill: '#ffffff',
-                    backgroundColor: '#000000',
-                    padding: { x: 10, y: 5 },
-                    align: 'center'
-                }).setOrigin(0.5,0.7).setVisible(false);
-*/
-               this.add.text(90, 10, 'ПРИГОРОД ЦИВИЛЬ', {
+                this.physics.add.collider(this.rats, this.collisionLayer);
+                this.physics.add.overlap(this.player, this.rats, this.playerHit, null, this);
+                this.physics.add.overlap(this.attackArea, this.rats, this.attackRat, null, this);
+
+                // Обновляем отображение здоровья в HTML
+                this.updateHealthDisplay();
+
+                this.add.text(90, 10, 'ПРИГОРОД ЦИВИЛЬ', {
                     font: '16px Arial',
                     fill: '#00aeffff',
                     stroke: '#eaf6ffff',
@@ -416,15 +487,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         stroke: true
                     }
                 }).setOrigin(0.5);
-/*
-                // Подсказка для игрока
-                this.add.text(320, 450, 'Подойдите к Кузнецу для получения задания', {
-                    font: '12px Arial',
-                    fill: '#d8bfd8'
-                }).setOrigin(0.5);
-*/
+
                 // Настройка управления
                 this.cursorKeys = this.input.keyboard.createCursorKeys();
+                this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+            }
+
+            createRats() {
+                this.rats = this.physics.add.group();
+                
+                // Создаем несколько крыс в разных местах карты
+                const ratPositions = [
+                    {x: 8, y: 3},
+                    {x: 12, y: 5},
+                    {x: 6, y: 8},
+                    {x: 14, y: 10}
+                ];
+                
+                ratPositions.forEach(pos => {
+                    const rat = this.rats.create(
+                        pos.x * this.tileSize + this.tileSize/2,
+                        pos.y * this.tileSize + this.tileSize/2,
+                        'rat'
+                    );
+                    
+                    // Настройки крысы
+                    rat.setCollideWorldBounds(true);
+                    rat.health = 30;
+                    rat.speed = 50;
+                    rat.attackCooldown = 0;
+                    rat.damage = 10;
+                });
             }
 
             update() {
@@ -443,74 +536,142 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     this.player.setVelocityY(100);
                 }
 
+                // Обработка атаки
+                if (this.attackKey.isDown && this.attackCooldown <= 0) {
+                    this.attack();
+                }
+
+                // Обновление кулдауна атаки
+                if (this.attackCooldown > 0) {
+                    this.attackCooldown--;
+                }
+
+                // Движение крыс к игроку
+                this.moveRats();
+
                 this.checkForLocationTransition();
-                //this.checkNPCDistance();
-            }
-/*
-            interactWithNPC() {
-                if (!this.questGiven) {
-                    this.giveQuest();
-                }
             }
 
-            giveQuest() {
-                this.questGiven = true;
-                this.questActive = true;
+            attack() {
+                // Устанавливаем кулдаун атаки
+                this.attackCooldown = 30; // 0.5 секунды при 60 FPS
                 
-                const questMessage = "Йоу, чувачок!\n\n" +
-                                   "Я - кузнец Ярик, но можешь называть меня просто YaRich.\n У меня короче есть темка одна.\n" +
-                                   "Долбанный снитчи заполоинил мою OG кузницу.\n С неё я начинал свой путь, она мне очень важна.\n\n" +
-                                   "Уничтожь сничтей в моей кузнице и вернись ко мне.\n" +
-                                   "Без награды я тебя не оставлю!\n\n" +
-                                   "Нажмите ПРОБЕЛ для принятия задания";
+                // Показываем зону атаки
+                this.attackArea.setPosition(this.player.x, this.player.y);
+                this.attackArea.setVisible(true);
                 
-                this.showQuestText(questMessage);
-                
-                // Добавляем обработчик клавиши пробела
-                this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-            }
-
-            showQuestText(text) {
-                this.questText.setText(text);
-                this.questText.setVisible(true);
-            }
-
-            hideQuestText() {
-                this.questText.setVisible(false);
-            }
-
-            checkNPCDistance() {
-                if (this.questText.visible && this.spaceKey && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-                    this.acceptQuest();
-                }
-
-                // Автоматически скрываем текст, если игрок отошел от NPC
-                const distance = Phaser.Math.Distance.Between(
-                    this.player.x, this.player.y,
-                    this.npc.x, this.npc.y
-                );
-
-                if (distance > 80 && this.questText.visible && !this.questGiven) {
-                    this.hideQuestText();
-                }
-            }
-
-            acceptQuest() {
-                this.hideQuestText();
-                
-                // Показываем подтверждение принятия задания
-                const acceptMessage = "Задание принято!\n\n" +
-                                    "Цель: Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль.\n" +
-                                    "Вернитесь к YaRich после выполнения";
-                
-                this.showQuestText(acceptMessage);
-                
-                // Через 3 секунды скрываем сообщение
-                this.time.delayedCall(3000, () => {
-                    this.hideQuestText();
+                // Через 200ms скрываем зону атаки
+                this.time.delayedCall(200, () => {
+                    this.attackArea.setVisible(false);
                 });
             }
-*/
+
+            attackRat(attackArea, rat) {
+                // Наносим урон крысе
+                rat.health -= 20;
+                
+                // Эффект получения урона (мигание)
+                rat.setTint(0xFF0000);
+                this.time.delayedCall(200, () => {
+                    rat.clearTint();
+                });
+                
+                // Если здоровье крысы <= 0, удаляем её
+                if (rat.health <= 0) {
+                    rat.destroy();
+                }
+            }
+
+            playerHit(player, rat) {
+                // Проверяем кулдаун атаки крысы
+                if (rat.attackCooldown <= 0) {
+                    // Наносим урон игроку
+                    this.playerHealth -= rat.damage;
+                    
+                    // Обновляем отображение здоровья в HTML
+                    this.updateHealthDisplay();
+                    
+                    // Эффект получения урона
+                    player.setTint(0xFF0000);
+                    this.time.delayedCall(200, () => {
+                        player.clearTint();
+                    });
+                    
+                    // Устанавливаем кулдаун атаки крысы
+                    rat.attackCooldown = 60; // 1 секунда при 60 FPS
+                    
+                    // Проверяем смерть игрока
+                    if (this.playerHealth <= 0) {
+                        this.gameOver();
+                    }
+                }
+                
+                // Обновляем кулдаун атаки крысы
+                if (rat.attackCooldown > 0) {
+                    rat.attackCooldown--;
+                }
+            }
+
+            moveRats() {
+                this.rats.getChildren().forEach(rat => {
+                    if (rat.active) {
+                        // Вычисляем направление к игроку
+                        const angle = Phaser.Math.Angle.Between(
+                            rat.x, rat.y,
+                            this.player.x, this.player.y
+                        );
+                        
+                        // Двигаем крысу к игроку
+                        rat.setVelocity(
+                            Math.cos(angle) * rat.speed,
+                            Math.sin(angle) * rat.speed
+                        );
+                        
+                        // Обновляем кулдаун атаки крысы
+                        if (rat.attackCooldown > 0) {
+                            rat.attackCooldown--;
+                        }
+                    }
+                });
+            }
+
+            updateHealthDisplay() {
+                // Обновляем текст здоровья
+                document.getElementById('health-text').textContent = `Здоровье: ${this.playerHealth}/${this.playerMaxHealth}`;
+                
+                // Обновляем полоску здоровья
+                const healthPercent = (this.playerHealth / this.playerMaxHealth) * 100;
+                document.getElementById('health-bar').style.width = `${healthPercent}%`;
+                
+                // Меняем цвет полоски в зависимости от здоровья
+                const healthBar = document.getElementById('health-bar');
+                if (healthPercent > 70) {
+                    healthBar.style.background = 'linear-gradient(to right, #00ff00, #80ff00)';
+                } else if (healthPercent > 30) {
+                    healthBar.style.background = 'linear-gradient(to right, #ffff00, #ff8000)';
+                } else {
+                    healthBar.style.background = 'linear-gradient(to right, #ff0000, #ff4000)';
+                }
+            }
+
+            gameOver() {
+                // Останавливаем игру
+                this.physics.pause();
+                this.player.setTint(0xFF0000);
+                
+                // Показываем сообщение о Game Over
+                const gameOverText = this.add.text(320, 240, 'ВЫ ПОГИБЛИ!\nНажмите R для перезапуска', {
+                    font: '24px Arial',
+                    fill: '#ff0000',
+                    align: 'center'
+                }).setOrigin(0.5);
+                
+                // Добавляем возможность перезапуска
+                this.input.keyboard.once('keydown-R', () => {
+                   window.location.href = 'sims4.php'; 
+                });
+            }
+
             checkForLocationTransition() {
                 const pathTopRow = 13;
                 const pathStartCol = 14;
