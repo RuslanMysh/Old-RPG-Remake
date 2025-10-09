@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: #0e0e0eff;
         }
         .container {
-            background: #08091fff;
+            background: #160b28ff;
             padding: 20px;
             border: 1px solid #ffd700;
             color: #e8e8e8ff;
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         select {
             width: 100%;
             padding: 8px;
-            background: #08091fff;
+            background: #160b28ff;
             border: 1px solid #ffd700;
             color: #e8e8e8ff;
             text-shadow: 0 0 10px #ffd700, 2px 2px 0 #000;
@@ -75,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cursor: pointer;
         }
         .submit-btn {
-            padding: 10px 20px;
-            background: #08091fff;
+            padding: 10px 50px;
+            background: #160b28ff;
             border: 1px solid #ffd700;
             color: #e8e8e8ff;
             text-shadow: 0 0 10px #ffd700, 2px 2px 0 #000;
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 16px;
         }
         .submit-btn:hover {
-            background: #0e0e0eff;
+            background: #0e0e0eff;  
         }
     </style>
 </head>

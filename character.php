@@ -52,12 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             letter-spacing: 3px;
         }
         .instructions {
-            color: #ffffffff;
-            text-align: center;
-            margin-top: 20%;
-            font-size: 1rem;
-            max-width: 320px;
-            line-height: 1.4;
+            margin-top: 210px;
+            left: 20px;
+            color: #fff;
+            text-shadow: 0 0 10px #ffffffff, 2px 2px 0 #000;
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ffffffff;
+            max-width: 600px;
+            font-size: 16px;
         }
         .container {
             display: flex;
@@ -107,10 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body id="body">
-    <div class="container">
-        <p class="instructions">Вас принесло сюда течение реки, в которую вы упали, когда повозка с заключёнными было опракинута. Вам нужно найти поселение. Для начала, исследуйте местность.</p>
-    </div>
-
     <?php if (isset($character_data)): ?>
     <div class="character-data">
         <h2>Данные персонажа</h2>
@@ -122,4 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <?php endif; ?>
 
-    
+    <div class="container">
+        <p class="instructions">Вас принесло сюда течение реки, в которую вы упали, когда повозка с заключёнными было опракинута. Вам нужно найти поселение. Для начала, исследуйте местность.</p>
+    </div>
