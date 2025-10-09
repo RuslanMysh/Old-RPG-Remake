@@ -524,7 +524,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Настройки крысы
                 rat.setCollideWorldBounds(true);
                 rat.health = 10;
-                rat.speed = 5;
+                rat.speed = 40;
                 rat.attackCooldown = 2;
                 rat.damage = 10;
                 rat.receivedDamage = false; // Флаг получения урона от текущей атаки
