@@ -210,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             this.lastDamageTime = 0; // Время последнего получения урона
 
             this.playerStartX = 5; 
-            this.playerStartY = 1; 
+            this.playerStartY = 2; 
         }
 
             preload() {
@@ -564,6 +564,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             this.autoRegenerateHealth();
 
             this.checkForLocationTransition();
+            this.checkForLocationTransition2();
         }
 
         // НОВЫЙ МЕТОД: Авторегенерация здоровья
@@ -743,9 +744,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         checkForLocationTransition() {
-            const pathTopRow = 13;
-            const pathStartCol = 14;
-            const pathEndCol = 15;
+            const pathTopRow = 14;
+            const pathStartCol = 15;
+            const pathEndCol = 16;
             
             const playerTileX = Math.floor(this.player.x / this.tileSize);
             const playerTileY = Math.floor(this.player.y / this.tileSize);
@@ -757,6 +758,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 window.location.href = 'index.php'; 
             }
         }
+        checkForLocationTransition2() {
+              
+                const pathTopRow = 1;
+                const pathStartCol = 4;
+                const pathEndCol = 5;
+                
+                
+                const playerTileX = Math.floor(this.player.x / this.tileSize);
+                const playerTileY = Math.floor(this.player.y / this.tileSize);
+                
+                
+                if (playerTileY === pathTopRow && 
+                    playerTileX >= pathStartCol && 
+                    playerTileX <= pathEndCol) {
+                    
+                   
+                    window.location.href = 'index.php'; 
+                }
+                
+            }
     }
 
     const config = {
