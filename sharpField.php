@@ -2,6 +2,17 @@
 session_start();
 ?>
 <?php
+if (!isset($_SESSION['quest_data'])) {
+    $_SESSION['quest_data'] = [
+        'active' => false,
+        'title' => '',
+        'objective' => '',
+        'reward' => '',
+        'giver' => '',
+        'status' => 'Не активно'
+    ];
+}
+
 if (isset($_SESSION['character_data'])) {
     $character_data = $_SESSION['character_data'];
 } else {
@@ -23,6 +34,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Обновляем переменную
     $character_data = $_SESSION['character_data'];
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quest_update'])) {
+    $_SESSION['quest_data'] = [
+        'active' => $_POST['quest_active'] === 'true',
+        'title' => $_POST['quest_title'] ?? '',
+        'objective' => $_POST['quest_objective'] ?? '',
+        'reward' => $_POST['quest_reward'] ?? '',
+        'giver' => $_POST['quest_giver'] ?? '',
+        'status' => $_POST['quest_status'] ?? 'Не активно'
+    ];
+}
+
+$quest_data = $_SESSION['quest_data'];
 ?>
 
 <!DOCTYPE html>
@@ -126,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: rgba(0, 0, 0, 0.8);
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
         }
-        
+
         .quest-info h2 {
             color: #ffd700;
             margin-top: 0;
@@ -134,26 +158,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.2rem;
             text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
         }
-        
+
         .quest-info p {
             margin: 8px 0;
             line-height: 1.4;
             font-size: 0.9rem;
         }
-        
+
         .quest-info .quest-title {
             color: #ff6b6b;
             font-weight: bold;
             font-size: 1rem;
         }
-        
+
         .quest-info .quest-objective {
             color: #4ecdc4;
         }
-        
+
         .quest-info .quest-reward {
             color: #ffe66d;
             font-style: italic;
+        }
+
+        .quest-info .quest-status {
+            color: #90ee90;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -176,6 +205,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <li><strong><?= htmlspecialchars($key) ?>:</strong> <?= htmlspecialchars($value) ?></li>
             <?php endforeach; ?>
         </ul>
+    </div>
+    <?php endif; ?>
+    <?php if (isset($quest_data) && $quest_data['active']): ?>
+    <div class="quest-info">
+        <h2>АКТИВНОЕ ЗАДАНИЕ</h2>
+        <p class="quest-title"><?= htmlspecialchars($quest_data['title']) ?></p>
+        <p class="quest-objective"><?= htmlspecialchars($quest_data['objective']) ?></p>
+        <p class="quest-reward"><?= htmlspecialchars($quest_data['reward']) ?></p>
+        <p class="quest-status">Статус: <?= htmlspecialchars($quest_data['status']) ?></p>
     </div>
     <?php endif; ?>
 
@@ -550,7 +588,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             acceptQuest() {
                 this.hideQuestText();
                 
-                // Сохраняем информацию о задании в переменную
+                // Сохраняем информацию о задании
                 this.currentQuest = {
                     title: "Очистка кузницы от снитчей",
                     objective: "Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль",
@@ -559,6 +597,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     status: "Активно"
                 };
                 
+                // Отправляем данные квеста на сервер через AJAX
+                this.saveQuestToSession(this.currentQuest);
+                
                 // Показываем подтверждение принятия задания
                 const acceptMessage = "Задание принято!\n\n" +
                                     "Цель: Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль.\n" +
@@ -566,12 +607,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 this.showQuestText(acceptMessage);
                 
-                // Через 3 секунды скрываем сообщение и показываем постоянную панель задания
+                // Через 3 секунды скрываем сообщение
                 this.time.delayedCall(3000, () => {
                     this.hideQuestText();
-                    this.showQuestPanel();
+                    // Перезагружаем страницу для обновления данных из сессии
+                    location.reload();
                 });
             }
+
+// Новый метод для сохранения квеста в сессию
+saveQuestToSession(questData) {
+    const formData = new FormData();
+    formData.append('quest_update', 'true');
+    formData.append('quest_active', 'true');
+    formData.append('quest_title', questData.title);
+    formData.append('quest_objective', questData.objective);
+    formData.append('quest_reward', questData.reward);
+    formData.append('quest_giver', questData.giver);
+    formData.append('quest_status', questData.status);
+    
+    fetch('sharpField.php', {
+        method: 'POST',
+        body: formData
+    }).then(response => {
+        console.log('Quest saved to session');
+    }).catch(error => {
+        console.error('Error saving quest:', error);
+    });
+}
 
             showQuestPanel() {
                 // Показываем красивую панель с информацией о задании

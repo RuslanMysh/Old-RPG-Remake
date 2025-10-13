@@ -1,9 +1,26 @@
 <?php
+session_start();
+
+// Инициализация данных квеста, если их нет
+if (!isset($_SESSION['quest_data'])) {
+    $_SESSION['quest_data'] = [
+        'active' => false,
+        'title' => '',
+        'objective' => '',
+        'reward' => '',
+        'giver' => '',
+        'status' => 'Не активно'
+    ];
+}
+
 if (isset($_SESSION['character_data'])) {
     $character_data = $_SESSION['character_data'];
 } else {
     $character_data = [];
 }
+
+$quest_data = $_SESSION['quest_data'];
+
 
 // Если пришел POST-запрос, сохраняем данные в сессию
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -110,6 +127,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .character-data strong {
             color: #ffffffff;
         }
+        .quest-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ffd700;
+            max-width: 300px;
+            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .quest-info h2 {
+            color: #ffd700;
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.2rem;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+        }
+
+        .quest-info p {
+            margin: 8px 0;
+            line-height: 1.4;
+            font-size: 0.9rem;
+        }
+
+        .quest-info .quest-title {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .quest-info .quest-objective {
+            color: #4ecdc4;
+        }
+
+        .quest-info .quest-reward {
+            color: #ffe66d;
+            font-style: italic;
+        }
+
+        .quest-info .quest-status {
+            color: #90ee90;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body id="body">
@@ -123,6 +188,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </ul>
     </div>
     <?php endif; ?>
+    <?php if (isset($quest_data) && $quest_data['active']): ?>
+    <div class="quest-info">
+        <h2>АКТИВНОЕ ЗАДАНИЕ</h2>
+        <p class="quest-title"><?= htmlspecialchars($quest_data['title']) ?></p>
+        <p class="quest-objective"><?= htmlspecialchars($quest_data['objective']) ?></p>
+        <p class="quest-reward"><?= htmlspecialchars($quest_data['reward']) ?></p>
+        <p class="quest-status">Статус: <?= htmlspecialchars($quest_data['status']) ?></p>
+    </div>
+    <?php endif; ?>
+
 
     <div>
         <p class="instructions">Вас принесло сюда течение реки, в которую вы упали, когда повозка с заключёнными было опракинута. Вам нужно найти поселение. Для начала, исследуйте местность.</p>
