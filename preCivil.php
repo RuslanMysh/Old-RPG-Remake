@@ -721,7 +721,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 });
             }
         }
-
+//хамит4
         playerHit(player, rat) {
             // Проверяем кулдаун атаки крысы
             if (rat.attackCooldown <= 0) {
