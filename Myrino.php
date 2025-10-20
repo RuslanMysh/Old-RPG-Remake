@@ -339,19 +339,15 @@ $quest_data = $_SESSION['quest_data'];
                 const npcCtx = npcTexture.getContext();
                 
                 // Тело NPC (фиолетовые одежды мудреца)
-                npcCtx.fillStyle = '#8B008B';
+                npcCtx.fillStyle = '#db0000ff';
                 npcCtx.fillRect(6, 6, 20, 18);
                 
                 // Голова
                 npcCtx.fillStyle = '#FFE4B5';
                 npcCtx.fillRect(12, 4, 8, 8);
                 
-                // Борода (длинная седая)
-                npcCtx.fillStyle = '#D3D3D3';
-                npcCtx.fillRect(10, 12, 12, 8);
-                
-                // Волосы (седые)
-                npcCtx.fillStyle = '#D3D3D3';
+                // Волосы
+                npcCtx.fillStyle = '#110e0eff';
                 npcCtx.fillRect(10, 2, 12, 4);
                 
                 // Глазы (мудрые)
@@ -359,12 +355,18 @@ $quest_data = $_SESSION['quest_data'];
                 npcCtx.fillRect(13, 7, 2, 2);
                 npcCtx.fillRect(17, 7, 2, 2);
                 
-                // Посох мудреца
-                npcCtx.fillStyle = '#8B4513';
-                npcCtx.fillRect(3, 8, 4, 14);
-                npcCtx.fillStyle = '#FFD700';
-                npcCtx.fillRect(2, 6, 6, 4);
-                
+                // Руки
+                npcCtx.fillStyle = '#a30000ff';
+                npcCtx.fillRect(3, 7, 4, 14);
+                npcCtx.fillStyle = '#a30000ff';
+                npcCtx.fillRect(25, 7, 4, 14);
+
+                //Ноги
+                npcCtx.fillStyle = '#12240cff';
+                npcCtx.fillRect(6, 21, 8, 4);
+                npcCtx.fillStyle = '#12240cff';
+                npcCtx.fillRect(18, 21, 8, 4);
+
                 npcTexture.refresh();
             }
         
