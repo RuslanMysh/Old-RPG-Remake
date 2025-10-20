@@ -1,7 +1,16 @@
 <?php
 session_start();
-?>
-<?php
+
+// Инициализация данных об убитых крысах, если их нет
+if (!isset($_SESSION['dead_rats'])) {
+    $_SESSION['dead_rats'] = [];
+}
+
+// Инициализация крыс, которых нужно убить для квеста
+if (!isset($_SESSION['rats_to_kill'])) {
+    $_SESSION['rats_to_kill'] = ['rat_8_3', 'rat_12_5', 'rat_6_8', 'rat_14_10'];
+}
+
 if (!isset($_SESSION['quest_data'])) {
     $_SESSION['quest_data'] = [
         'active' => false,
@@ -13,28 +22,7 @@ if (!isset($_SESSION['quest_data'])) {
     ];
 }
 
-if (isset($_SESSION['character_data'])) {
-    $character_data = $_SESSION['character_data'];
-} else {
-    $character_data = [];
-}
-
-// Если пришел POST-запрос, сохраняем данные в сессию
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $_SESSION['character_data'] = [
-        'Язык программирования' => $_POST['programist'] ?? 'Не указано',
-        'Стиль волос' => $_POST['hair_style'] ?? 'Не указано',
-        'Цвет волос' => $_POST['hair_color'] ?? 'Не указано',
-        'Стиль бороды' => $_POST['beard_style'] ?? 'Не указано',
-        'Цвет бороды' => $_POST['beard_color'] ?? 'Не указано',
-        'Цвет кожи' => $_POST['skin_color'] ?? 'Не указано',
-        'Цвет глаз' => $_POST['eyes_color'] ?? 'Не указано'
-    ];
-    
-    // Обновляем переменную
-    $character_data = $_SESSION['character_data'];
-}
-
+// Обработка обновления квеста через POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quest_update'])) {
     $_SESSION['quest_data'] = [
         'active' => $_POST['quest_active'] === 'true',
@@ -44,6 +32,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quest_update'])) {
         'giver' => $_POST['quest_giver'] ?? '',
         'status' => $_POST['quest_status'] ?? 'Не активно'
     ];
+    echo json_encode(['status' => 'success']);
+    exit;
+}
+
+// Проверка выполнения квеста при загрузке страницы
+if ($_SESSION['quest_data']['active']) {
+    $allRatsKilled = true;
+    foreach ($_SESSION['rats_to_kill'] as $ratId) {
+        if (!in_array($ratId, $_SESSION['dead_rats'])) {
+            $allRatsKilled = false;
+            break;
+        }
+    }
+    
+    if ($allRatsKilled) {
+        $_SESSION['quest_data']['status'] = 'Выполнено';
+        $_SESSION['quest_data']['active'] = false;
+    }
+}
+
+// Обработка завершения квеста через AJAX
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['complete_quest'])) {
+    $allRatsKilled = true;
+    foreach ($_SESSION['rats_to_kill'] as $ratId) {
+        if (!in_array($ratId, $_SESSION['dead_rats'])) {
+            $allRatsKilled = false;
+            break;
+        }
+    }
+    
+    if ($allRatsKilled) {
+        $_SESSION['quest_data']['status'] = 'Выполнено';
+        $_SESSION['quest_data']['active'] = false;
+        echo json_encode(['status' => 'success', 'quest_completed' => true]);
+    } else {
+        echo json_encode(['status' => 'success', 'quest_completed' => false]);
+    }
+    exit;
+}
+
+if (isset($_SESSION['character_data'])) {
+    $character_data = $_SESSION['character_data'];
+} else {
+    $character_data = [];
 }
 
 $quest_data = $_SESSION['quest_data'];
@@ -190,12 +222,6 @@ $quest_data = $_SESSION['quest_data'];
     <div class="container">
         <p class="instructions">Вы прибыли на Шарповые поля. Здесь живут опытные программисты C#.</p>
     </div>
-    <div id="questInfo" class="quest-info" style="display: none;">
-        <h2>АКТИВНОЕ ЗАДАНИЕ</h2>
-        <p class="quest-title">Очистка кузницы от снитчей</p>
-        <p class="quest-objective">Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль</p>
-        <p class="quest-reward">Награда: обещана YaRich'ом</p>
-    </div>
 
     <?php if (isset($character_data)): ?>
     <div class="character-data">
@@ -228,10 +254,11 @@ $quest_data = $_SESSION['quest_data'];
                 this.tileSize = 32;
                 this.collisionLayer = null;
                 this.npc = null;
-                this.questGiven = false;
+                this.questGiven = <?php echo $quest_data['active'] || $quest_data['status'] === 'Выполнено' ? 'true' : 'false'; ?>;
                 this.questText = null;
-                this.questActive = false;
+                this.questActive = <?php echo $quest_data['active'] ? 'true' : 'false'; ?>;
                 this.currentQuest = null;
+                this.questCompleted = <?php echo $quest_data['status'] === 'Выполнено' ? 'true' : 'false'; ?>;
 
                 this.playerStartX = 14; 
                 this.playerStartY = 11; 
@@ -385,7 +412,7 @@ $quest_data = $_SESSION['quest_data'];
                 npcCtx.fillStyle = '#110e0eff';
                 npcCtx.fillRect(10, 2, 12, 4);
                 
-                // Глаза
+                // Глазы
                 npcCtx.fillStyle = '#8acbffff';
                 npcCtx.fillRect(13, 7, 2, 2);
                 npcCtx.fillRect(17, 7, 2, 2);
@@ -430,7 +457,7 @@ $quest_data = $_SESSION['quest_data'];
                     [2, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 4, 2],
                     [2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 4, 4, 4, 2]
                 ];
-
+                
                 // Отрисовываем карту
                 for (let y = 0; y < this.mapData.length; y++) {
                     for (let x = 0; x < this.mapData[y].length; x++) {
@@ -537,10 +564,124 @@ $quest_data = $_SESSION['quest_data'];
                 this.checkNPCDistance();
             }
 
+            checkQuestCompletion() {
+                // Проверяем, убиты ли все крысы для квеста
+                const ratsToKill = <?php echo json_encode($_SESSION['rats_to_kill']); ?>;
+                const deadRats = <?php echo json_encode($_SESSION['dead_rats']); ?>;
+                
+                let allRatsKilled = true;
+                ratsToKill.forEach(ratId => {
+                    if (!deadRats.includes(ratId)) {
+                        allRatsKilled = false;
+                    }
+                });
+                
+                return allRatsKilled;
+            }
+
             interactWithNPC() {
-                if (!this.questGiven) {
-                    this.giveQuest();
+                // Проверяем, выполнены ли условия квеста
+                const allRatsKilled = this.checkQuestCompletion();
+                
+                // Если квест уже выполнен, ничего не делаем
+                if (this.questCompleted) {
+                    const completedMessage = "Спасибо еще раз, братан!\nМоя кузница снова в безопасности.";
+                    this.showQuestText(completedMessage);
+                    this.time.delayedCall(3000, () => {
+                        this.hideQuestText();
+                    });
+                    return;
                 }
+                
+                // Основная логика взаимодействия с NPC
+                if (!this.questGiven && !allRatsKilled) {
+                    // Квест еще не взят и крысы не убиты - предлагаем квест
+                    this.giveQuest();
+                } else if (!this.questGiven && allRatsKilled) {
+                    // Квест не взят, но крысы уже убиты - сразу завершаем
+                    this.giveAndCompleteQuest();
+                } else if (this.questActive && allRatsKilled) {
+                    // Квест активен и крысы убиты - завершаем квест
+                    this.completeQuest();
+                } else if (this.questGiven && !allRatsKilled) {
+                    // Квест взят, но крысы еще не все убиты - показываем прогресс
+                    this.showQuestProgress();
+                }
+            }
+
+            giveAndCompleteQuest() {
+                this.questGiven = true;
+                this.questActive = false;
+                this.questCompleted = true;
+                
+                const questMessage = "Йоу, чувачок!\n\n" +
+                                "Я - кузнец Ярик, но можешь называть меня просто YaRich.\n" +
+                                "Вижу ты уже разобрался со снитчами в моей кузнице!\n" +
+                                "Огромное спасибо, братан!\n\n" +
+                                "Задание выполнено! Вот твоя награда - этот легендарный Шарповый Меч!";
+                
+                this.showQuestText(questMessage);
+                
+                // Сохраняем завершение квеста
+                this.completeQuestInSession();
+                
+                this.time.delayedCall(4000, () => {
+                    this.hideQuestText();
+                    location.reload();
+                });
+            }
+
+            showQuestProgress() {
+                const ratsToKill = <?php echo json_encode($_SESSION['rats_to_kill']); ?>;
+                const deadRats = <?php echo json_encode($_SESSION['dead_rats']); ?>;
+                const killedCount = deadRats.filter(ratId => ratsToKill.includes(ratId)).length;
+                const totalCount = ratsToKill.length;
+                
+                const progressMessage = `Задание в процессе!\n\n` +
+                                    `Убито крыс: ${killedCount}/${totalCount}\n` +
+                                    `Вернись ко мне, когда выполнишь задание.`;
+                
+                this.showQuestText(progressMessage);
+                
+                this.time.delayedCall(3000, () => {
+                    this.hideQuestText();
+                });
+            }
+
+            completeQuest() {
+                this.hideQuestText();
+                this.questActive = false;
+                this.questCompleted = true;
+                
+                // Отправляем запрос на завершение квеста
+                this.completeQuestInSession();
+                
+                const completeMessage = "Задание выполнено!\n\n" +
+                                    "Ты настоящий герой! Моя кузница снова в безопасности.\n" +
+                                    "Вот твоя награда - этот легендарный Шарповый Меч!\n\n" +
+                                    "Спасибо, братан!";
+                
+                this.showQuestText(completeMessage);
+                
+                this.time.delayedCall(4000, () => {
+                    this.hideQuestText();
+                    location.reload();
+                });
+            }
+
+            completeQuestInSession() {
+                const formData = new FormData();
+                formData.append('complete_quest', 'true');
+                
+                fetch('sharpField.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+                .then(data => {
+                    console.log('Quest completed:', data);
+                }).catch(error => {
+                    console.error('Error completing quest:', error);
+                });
             }
 
             giveQuest() {
@@ -549,8 +690,8 @@ $quest_data = $_SESSION['quest_data'];
                 
                 const questMessage = "Йоу, чувачок!\n\n" +
                                    "Я - кузнец Ярик, но можешь называть меня просто YaRich.\n У меня короче есть темка одна.\n" +
-                                   "Долбанный снитчи заполоинил мою OG кузницу.\n С неё я начинал свой путь, она мне очень важна.\n\n" +
-                                   "Уничтожь сничтей в моей кузнице и вернись ко мне.\n" +
+                                   "Долбанный снитчи заполонили мою OG кузницу.\n С неё я начинал свой путь, она мне очень важна.\n\n" +
+                                   "Уничтожь снитчей в моей кузнице и вернись ко мне.\n" +
                                    "Без награды я тебя не оставлю!\n\n" +
                                    "Нажмите ПРОБЕЛ для принятия задания";
                 
@@ -588,53 +729,48 @@ $quest_data = $_SESSION['quest_data'];
             acceptQuest() {
                 this.hideQuestText();
                 
-                // Сохраняем информацию о задании
                 this.currentQuest = {
                     title: "Очистка кузницы от снитчей",
                     objective: "Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль",
-                    reward: "Награда: обещана YaRich'ом",
+                    reward: "Награда: Шарповый Меч",
                     giver: "YaRich (Кузнец Ярик)",
                     status: "Активно"
                 };
                 
-                // Отправляем данные квеста на сервер через AJAX
                 this.saveQuestToSession(this.currentQuest);
                 
-                // Показываем подтверждение принятия задания
                 const acceptMessage = "Задание принято!\n\n" +
                                     "Цель: Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль.\n" +
                                     "Вернитесь к YaRich после выполнения";
                 
                 this.showQuestText(acceptMessage);
                 
-                // Через 3 секунды скрываем сообщение
                 this.time.delayedCall(3000, () => {
                     this.hideQuestText();
-                    // Перезагружаем страницу для обновления данных из сессии
                     location.reload();
                 });
             }
 
-// Новый метод для сохранения квеста в сессию
-saveQuestToSession(questData) {
-    const formData = new FormData();
-    formData.append('quest_update', 'true');
-    formData.append('quest_active', 'true');
-    formData.append('quest_title', questData.title);
-    formData.append('quest_objective', questData.objective);
-    formData.append('quest_reward', questData.reward);
-    formData.append('quest_giver', questData.giver);
-    formData.append('quest_status', questData.status);
-    
-    fetch('sharpField.php', {
-        method: 'POST',
-        body: formData
-    }).then(response => {
-        console.log('Quest saved to session');
-    }).catch(error => {
-        console.error('Error saving quest:', error);
-    });
-}
+            // Сохранения квеста в сессию
+            saveQuestToSession(questData) {
+                const formData = new FormData();
+                formData.append('quest_update', 'true');
+                formData.append('quest_active', 'true');
+                formData.append('quest_title', questData.title);
+                formData.append('quest_objective', questData.objective);
+                formData.append('quest_reward', questData.reward);
+                formData.append('quest_giver', questData.giver);
+                formData.append('quest_status', questData.status);
+                
+                fetch('sharpField.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    console.log('Quest saved to session');
+                }).catch(error => {
+                    console.error('Error saving quest:', error);
+                });
+            }
 
             showQuestPanel() {
                 // Показываем красивую панель с информацией о задании

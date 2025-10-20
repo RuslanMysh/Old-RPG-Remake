@@ -1,5 +1,16 @@
 <?php
-session_start(); // Добавляем в самое начало
+session_start();
+
+// Сбрасываем данные игры при создании нового персонажа
+$_SESSION['dead_rats'] = [];
+$_SESSION['quest_data'] = [
+    'active' => false,
+    'title' => '',
+    'objective' => '',
+    'reward' => '',
+    'giver' => '',
+    'status' => 'Не активно'
+];
 
 // Если есть данные в сессии, используем их для предзаполнения формы
 if (isset($_SESSION['character_data'])) {

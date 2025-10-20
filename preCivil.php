@@ -1,7 +1,10 @@
 <?php
 session_start();
-?>
-<?php
+
+// Инициализация крыс, которых нужно убить для квеста
+if (!isset($_SESSION['rats_to_kill'])) {
+    $_SESSION['rats_to_kill'] = ['rat_8_3', 'rat_12_5', 'rat_6_8', 'rat_14_10'];
+}
 if (!isset($_SESSION['quest_data'])) {
     $_SESSION['quest_data'] = [
         'active' => false,
@@ -36,6 +39,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Обновляем переменную
     $character_data = $_SESSION['character_data'];
+}
+
+// Инициализация данных об убитых крысах, если их нет
+if (!isset($_SESSION['dead_rats'])) {
+    $_SESSION['dead_rats'] = [];
+}
+
+// Обработка убийства крысы через AJAX
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rat_killed'])) {
+    $rat_id = $_POST['rat_id'] ?? '';
+    if (!in_array($rat_id, $_SESSION['dead_rats'])) {
+        $_SESSION['dead_rats'][] = $rat_id;
+    }
+    echo json_encode(['status' => 'success', 'dead_rats' => $_SESSION['dead_rats']]);
+    exit;
 }
 ?>
 
@@ -578,15 +596,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         createRats() {
             this.rats = this.physics.add.group();
             
-            // Создаем несколько крыс в разных местах карты
+            // Позиции крыс с уникальными ID
             const ratPositions = [
-                {x: 8, y: 3},
-                {x: 12, y: 5},
-                {x: 6, y: 8},
-                {x: 14, y: 10}
+                {x: 8, y: 3, id: 'rat_8_3'},
+                {x: 12, y: 5, id: 'rat_12_5'},
+                {x: 6, y: 8, id: 'rat_6_8'},
+                {x: 14, y: 10, id: 'rat_14_10'}
             ];
             
+            // Получаем список убитых крыс из PHP сессии
+            const deadRats = <?php echo json_encode($_SESSION['dead_rats']); ?>;
+            
             ratPositions.forEach(pos => {
+                // Проверяем, не убита ли уже эта крыса
+                if (deadRats.includes(pos.id)) {
+                    console.log('Skipping dead rat:', pos.id);
+                    return; // Пропускаем создание убитой крысы
+                }
+                
                 const rat = this.rats.create(
                     pos.x * this.tileSize + this.tileSize/2,
                     pos.y * this.tileSize + this.tileSize/2,
@@ -599,7 +626,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 rat.speed = 40;
                 rat.attackCooldown = 2;
                 rat.damage = 10;
-                rat.receivedDamage = false; // Флаг получения урона от текущей атаки
+                rat.receivedDamage = false;
+                rat.id = pos.id; // Уникальный идентификатор крысы
+            });
+        }
+
+        // Новая функция для сохранения убитой крысы в сессии
+        saveDeadRat(ratId) {
+            const formData = new FormData();
+            formData.append('rat_killed', 'true');
+            formData.append('rat_id', ratId);
+            
+            fetch('preCivil.php', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                console.log('Rat saved as dead:', ratId);
+            }).catch(error => {
+                console.error('Error saving dead rat:', error);
+            });
+        }
+
+        checkQuestCompletion() {
+            const ratsToKill = <?php echo json_encode($_SESSION['rats_to_kill']); ?>;
+            const deadRats = <?php echo json_encode($_SESSION['dead_rats']); ?>;
+            
+            let allRatsKilled = true;
+            ratsToKill.forEach(ratId => {
+                if (!deadRats.includes(ratId)) {
+                    allRatsKilled = false;
+                }
+            });
+            
+            // Если квест активен и все крысы убиты, показываем сообщение
+            if (allRatsKilled && <?php echo $quest_data['active'] ? 'true' : 'false'; ?>) {
+                this.showQuestCompleteMessage();
+            }
+        }
+
+        showQuestCompleteMessage() {
+            const questMessage = "Все крысы уничтожены!\n\n" +
+                                "Вернитесь к YaRich на Шарповые поля для получения награды.";
+            
+            // Создаем текстовое сообщение
+            const text = this.add.text(320, 100, questMessage, {
+                font: '14px Arial',
+                fill: '#ffffff',
+                backgroundColor: '#000000',
+                padding: { x: 10, y: 5 },
+                align: 'center'
+            }).setOrigin(0.5);
+            
+            // Через 5 секунд скрываем сообщение
+            this.time.delayedCall(5000, () => {
+                text.destroy();
             });
         }
 
@@ -628,7 +709,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (this.attackCooldown > 0) {
                 this.attackCooldown--;
             }
-
+            // Проверяем выполнение квеста каждые 2 секунды
+            if (this.time.now % 2000 < 16) { // Примерно каждые 2 секунды
+                this.checkQuestCompletion();
+            }
             // Движение крыс к игроку
             this.moveRats();
 
@@ -694,33 +778,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         attackRat(attackArea, rat) {
-            // Проверяем, не получала ли уже эта крыса урон от текущей атаки
-            if (!rat.receivedDamage) {
-                // Помечаем, что крыса получила урон от этой атаки
-                rat.receivedDamage = true;
-                
-                // Наносим урон крысе
-                rat.health -= 20;
-                
-                // Эффект получения урона (мигание)
-                rat.setTint(0xFF0000);
-                this.time.delayedCall(200, () => {
-                    rat.clearTint();
-                });
-                
-                // Если здоровье крысы <= 0, удаляем её
-                if (rat.health <= 0) {
-                    rat.destroy();
-                }
-                
-                // Сбрасываем флаг получения урона через небольшое время
-                this.time.delayedCall(100, () => {
-                    if (rat.active) {
-                        rat.receivedDamage = false;
-                    }
-                });
-            }
+    // Проверяем, не получала ли уже эта крыса урон от текущей атаки
+    if (!rat.receivedDamage) {
+        // Помечаем, что крыса получила урон от этой атаки
+        rat.receivedDamage = true;
+        
+        // Наносим урон крысе
+        rat.health -= 20;
+        
+        // Эффект получения урона (мигание)
+        rat.setTint(0xFF0000);
+        this.time.delayedCall(200, () => {
+            rat.clearTint();
+        });
+        
+        // Если здоровье крысы <= 0, удаляем её
+        if (rat.health <= 0) {
+            // Сохраняем ID убитой крысы в сессии
+            this.saveDeadRat(rat.id);
+            rat.destroy();
         }
+        
+        // Сбрасываем флаг получения урона через небольшое время
+        this.time.delayedCall(100, () => {
+            if (rat.active) {
+                rat.receivedDamage = false;
+            }
+        });
+    }
+}
 //хамит4
         playerHit(player, rat) {
             // Проверяем кулдаун атаки крысы
