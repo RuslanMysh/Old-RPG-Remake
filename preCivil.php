@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rat_killed'])) {
         /* Стили для отображения здоровья */
         .health-display {
             position: absolute;
-            top: 20px;
+            top: 250px;
             right: 20px;
             color: #fff;
             font-family: Arial, sans-serif;
@@ -723,7 +723,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rat_killed'])) {
             this.checkForLocationTransition2();
         }
 
-        // НОВЫЙ МЕТОД: Авторегенерация здоровья
+        //Авторегенерация здоровья
         autoRegenerateHealth() {
             const currentTime = this.time.now;
             
