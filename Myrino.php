@@ -1,16 +1,6 @@
 <?php
 session_start();
 
-// Инициализация данных об убитых крысах, если их нет
-if (!isset($_SESSION['dead_rats'])) {
-    $_SESSION['dead_rats'] = [];
-}
-
-// Инициализация крыс, которых нужно убить для квеста
-if (!isset($_SESSION['rats_to_kill'])) {
-    $_SESSION['rats_to_kill'] = ['rat_8_3', 'rat_12_5', 'rat_6_8', 'rat_14_10'];
-}
-
 if (!isset($_SESSION['quest_data'])) {
     $_SESSION['quest_data'] = [
         'active' => false,
@@ -20,56 +10,6 @@ if (!isset($_SESSION['quest_data'])) {
         'giver' => '',
         'status' => 'Не активно'
     ];
-}
-
-// Обработка обновления квеста через POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quest_update'])) {
-    $_SESSION['quest_data'] = [
-        'active' => $_POST['quest_active'] === 'true',
-        'title' => $_POST['quest_title'] ?? '',
-        'objective' => $_POST['quest_objective'] ?? '',
-        'reward' => $_POST['quest_reward'] ?? '',
-        'giver' => $_POST['quest_giver'] ?? '',
-        'status' => $_POST['quest_status'] ?? 'Не активно'
-    ];
-    echo json_encode(['status' => 'success']);
-    exit;
-}
-
-// Проверка выполнения квеста при загрузке страницы
-if ($_SESSION['quest_data']['active']) {
-    $allRatsKilled = true;
-    foreach ($_SESSION['rats_to_kill'] as $ratId) {
-        if (!in_array($ratId, $_SESSION['dead_rats'])) {
-            $allRatsKilled = false;
-            break;
-        }
-    }
-    
-    if ($allRatsKilled) {
-        $_SESSION['quest_data']['status'] = 'Выполнено';
-        $_SESSION['quest_data']['active'] = false;
-    }
-}
-
-// Обработка завершения квеста через AJAX
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['complete_quest'])) {
-    $allRatsKilled = true;
-    foreach ($_SESSION['rats_to_kill'] as $ratId) {
-        if (!in_array($ratId, $_SESSION['dead_rats'])) {
-            $allRatsKilled = false;
-            break;
-        }
-    }
-    
-    if ($allRatsKilled) {
-        $_SESSION['quest_data']['status'] = 'Выполнено';
-        $_SESSION['quest_data']['active'] = false;
-        echo json_encode(['status' => 'success', 'quest_completed' => true]);
-    } else {
-        echo json_encode(['status' => 'success', 'quest_completed' => false]);
-    }
-    exit;
 }
 
 if (isset($_SESSION['character_data'])) {
@@ -86,7 +26,7 @@ $quest_data = $_SESSION['quest_data'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Good Ass Coder</title>
+    <title>Good Ass Coder - Мурино</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     <style>
         #body {
@@ -220,7 +160,7 @@ $quest_data = $_SESSION['quest_data'];
 </head>
 <body id="body">
     <div class="container">
-        <p class="instructions">Вы прибыли на Шарповые поля. Здесь живут опытные программисты C#.</p>
+        <p class="instructions">Вы прибыли в город ПитоМурино - здесь живут опытные программитсы Python.</p>
     </div>
 
     <?php if (isset($character_data)): ?>
@@ -254,14 +194,10 @@ $quest_data = $_SESSION['quest_data'];
                 this.tileSize = 32;
                 this.collisionLayer = null;
                 this.npc = null;
-                this.questGiven = <?php echo $quest_data['active'] || $quest_data['status'] === 'Выполнено' ? 'true' : 'false'; ?>;
                 this.questText = null;
-                this.questActive = <?php echo $quest_data['active'] ? 'true' : 'false'; ?>;
-                this.currentQuest = null;
-                this.questCompleted = <?php echo $quest_data['status'] === 'Выполнено' ? 'true' : 'false'; ?>;
 
                 this.playerStartX = 14; 
-                this.playerStartY = 11; 
+                this.playerStartY = 13; 
             }
 
             preload() {
@@ -274,6 +210,8 @@ $quest_data = $_SESSION['quest_data'];
                 this.load.image('sand', 'assets/sand.png');
                 this.load.image('forest', 'assets/tree.png');
                 this.load.image('path', 'assets/path.png');
+                this.load.image('oldWood', 'assets/oldWood.png');
+                this.load.image('oldWoodFloor', 'assets/oldWoodFloor.png');
             }
 
             createTextures() {
@@ -396,66 +334,57 @@ $quest_data = $_SESSION['quest_data'];
                 
                 playerTexture.refresh();
 
-                // Текстура для NPC (Мастер C#)
+                // Текстура для NPC (Мудрец Мурино)
                 const npcTexture = this.textures.createCanvas('npc', tileSize, tileSize);
                 const npcCtx = npcTexture.getContext();
                 
-                // Тело NPC (фиолетовый плащ для C#)
-                npcCtx.fillStyle = '#e25a00ff';
+                // Тело NPC (фиолетовые одежды мудреца)
+                npcCtx.fillStyle = '#8B008B';
                 npcCtx.fillRect(6, 6, 20, 18);
                 
                 // Голова
-                npcCtx.fillStyle = '#ffd09aff';
+                npcCtx.fillStyle = '#FFE4B5';
                 npcCtx.fillRect(12, 4, 8, 8);
                 
-                // Волосы 
-                npcCtx.fillStyle = '#110e0eff';
+                // Борода (длинная седая)
+                npcCtx.fillStyle = '#D3D3D3';
+                npcCtx.fillRect(10, 12, 12, 8);
+                
+                // Волосы (седые)
+                npcCtx.fillStyle = '#D3D3D3';
                 npcCtx.fillRect(10, 2, 12, 4);
                 
-                // Глазы
-                npcCtx.fillStyle = '#8acbffff';
+                // Глазы (мудрые)
+                npcCtx.fillStyle = '#000080';
                 npcCtx.fillRect(13, 7, 2, 2);
                 npcCtx.fillRect(17, 7, 2, 2);
                 
-                // Руки
-                npcCtx.fillStyle = '#ce8600ff';
-                npcCtx.fillRect(3, 7, 4, 14);
-                npcCtx.fillStyle = '#ce8600ff';
-                npcCtx.fillRect(25, 7, 4, 14);
-
-                //Ноги
-                npcCtx.fillStyle = '#14130eff';
-                npcCtx.fillRect(6, 21, 8, 4);
-                npcCtx.fillStyle = '#14130eff';
-                npcCtx.fillRect(18, 21, 8, 4);
-                
-                // Декоративные элементы (символы C#)
-                npcCtx.fillStyle = '#d81900ff';
-                npcCtx.fillRect(8, 14, 3, 1); // #
-                npcCtx.fillRect(10, 13, 1, 3); // #
-                npcCtx.fillRect(21, 14, 3, 1); // #
-                npcCtx.fillRect(23, 13, 1, 3); // #
+                // Посох мудреца
+                npcCtx.fillStyle = '#8B4513';
+                npcCtx.fillRect(3, 8, 4, 14);
+                npcCtx.fillStyle = '#FFD700';
+                npcCtx.fillRect(2, 6, 6, 4);
                 
                 npcTexture.refresh();
             }
         
             create() {
                 this.mapData = [
-                    [0, 0, 0, 4, 0, 4, 0, 0, 4, 0, 0, 4, 0, 0, 5, 5, 0, 4, 4, 2],
-                    [0, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 5, 5, 4, 0, 4, 2],
-                    [0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 4, 4, 0, 5, 5, 5, 0, 0, 0, 2],
-                    [0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 4, 0, 0, 4, 2],
-                    [5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 5, 5, 5, 4, 0, 0, 0, 0, 2],
-                    [5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 4, 5, 5, 5, 0, 2, 0, 2, 0, 2],
-                    [0, 4, 0, 4, 4, 0, 0, 5, 5, 5, 0, 4, 5, 5, 2, 2, 2, 2, 2, 2],
-                    [0, 0, 0, 0, 0, 0, 4, 0, 5, 5, 5, 0, 5, 5, 0, 2, 0, 2, 0, 2],
-                    [0, 0, 2, 0, 2, 0, 0, 4, 0, 5, 5, 5, 5, 5, 2, 2, 2, 2, 2, 2],
-                    [4, 2, 2, 2, 2, 2, 0, 0, 0, 0, 5, 5, 5, 5, 0, 2, 0, 2, 0, 2],
-                    [0, 0, 2, 4, 2, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 4, 2],
-                    [0, 2, 2, 2, 2, 2, 0, 4, 0, 0, 0, 4, 5, 5, 5, 0, 0, 4, 0, 2],
-                    [0, 0, 2, 0, 2, 0, 4, 0, 0, 4, 0, 0, 0, 5, 5, 5, 4, 0, 0, 2],
-                    [2, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 4, 2],
-                    [2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 4, 4, 4, 2]
+                    [0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 2, 2, 2, 2, 2, 2],
+                    [0, 0, 1, 1, 0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+                    [0, 1, 1, 1, 3, 3, 0, 0, 6, 6, 0, 0, 0, 0, 0, 6, 6, 0, 0, 2],
+                    [0, 1, 1, 1, 3, 3, 0, 0, 0, 0, 0, 0, 4, 0, 0, 6, 6, 0, 0, 2],
+                    [0, 0, 3, 3, 3, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+                    [0, 0, 3, 3, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 4, 0, 0, 0, 0, 0],
+                    [2, 0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 7, 6, 0, 0, 0, 0, 6, 6, 0],
+                    [2, 0, 0, 0, 0, 0, 0, 4, 0, 6, 7, 7, 6, 0, 0, 0, 0, 6, 6, 0],
+                    [2, 0, 0, 0, 0, 0, 0, 0, 0, 6, 5, 5, 6, 0, 0, 4, 0, 0, 0, 0],
+                    [2, 0, 0, 6, 6, 6, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0],
+                    [2, 0, 0, 6, 6, 6, 0, 0, 4, 0, 0, 5, 5, 5, 0, 0, 0, 4, 0, 0],
+                    [2, 0, 0, 6, 6, 6, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 2],
+                    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 5, 5, 5, 0, 4, 0, 2],
+                    [2, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 5, 5, 0, 0, 0, 2],
+                    [2, 2, 0, 4, 0, 0, 4, 0, 0, 0, 4, 0, 4, 0, 5, 5, 0, 0, 2, 2]
                 ];
                 
                 // Отрисовываем карту
@@ -471,6 +400,8 @@ $quest_data = $_SESSION['quest_data'];
                             case 3: textureKey = 'sand'; break;
                             case 4: textureKey = 'forest'; break;
                             case 5: textureKey = 'path'; break;
+                            case 6: textureKey = 'oldWood'; break;
+                            case 7: textureKey = 'oldWoodFloor'; break;
                         }
                         
                         this.add.image(x * this.tileSize + this.tileSize/2, y * this.tileSize + this.tileSize/2, textureKey);
@@ -480,11 +411,11 @@ $quest_data = $_SESSION['quest_data'];
                 // Создаем физические объекты для коллизий
                 this.collisionLayer = this.physics.add.staticGroup();
 
-                // Добавляем коллизии для воды (тип 1) и гор (тип 2)
+                // Добавляем коллизии для гор (тип 2) и домов (тип 6)
                 for (let y = 0; y < this.mapData.length; y++) {
                     for (let x = 0; x < this.mapData[y].length; x++) {
                         const tileType = this.mapData[y][x];
-                        if (tileType === 1 || tileType === 2) { 
+                        if (tileType === 2 || tileType === 6) { 
                             const collisionRect = this.collisionLayer.create(
                                 x * this.tileSize + this.tileSize/2, 
                                 y * this.tileSize + this.tileSize/2, 
@@ -503,15 +434,15 @@ $quest_data = $_SESSION['quest_data'];
                 this.player = this.physics.add.sprite(startPixelX, startPixelY, 'player');
                 this.player.setCollideWorldBounds(true);
 
-                // Добавляем NPC (Мастер C#) - располагаем его на координатах 8, 6
-                this.npc = this.physics.add.sprite(8 * this.tileSize + this.tileSize/2, 6 * this.tileSize + this.tileSize/2, 'npc');
+                // Добавляем NPC (Мудрец Мурино) - располагаем его в центре города
+                this.npc = this.physics.add.sprite(10 * this.tileSize + this.tileSize/2, 7 * this.tileSize + this.tileSize/2, 'npc');
                 this.npc.setImmovable(true);
 
                 // Добавляем коллизии
                 this.physics.add.collider(this.player, this.collisionLayer);
                 this.physics.add.collider(this.player, this.npc, this.interactWithNPC, null, this);
 
-                // Текст для задания
+                // Текст для диалога
                 this.questText = this.add.text(320, 400, '', {
                     font: '14px Arial',
                     fill: '#ffffff',
@@ -520,11 +451,11 @@ $quest_data = $_SESSION['quest_data'];
                     align: 'center'
                 }).setOrigin(0.5,0.7).setVisible(false);
 
-                this.add.text(160, 20, 'Шарповые поля', {
+                this.add.text(160, 20, 'ГОРОД ПИТОМУРИНО', {
                     font: '16px Arial',
-                    fill: '#8602a0ff',
-                    stroke: '#f3e7ffff',
-                    strokeThickness: 4, 
+                    fill: '#9370DB',
+                    stroke: '#FFFFFF',
+                    strokeThickness: 4,
                     shadow: {
                         offsetX: 2,
                         offsetY: 2,
@@ -535,9 +466,9 @@ $quest_data = $_SESSION['quest_data'];
                 }).setOrigin(0.5);
 
                 // Подсказка для игрока
-                this.add.text(320, 450, 'Подойдите к Кузнецу для получения задания', {
+                this.add.text(320, 450, 'Подойдите к Меллстрою для разговора', {
                     font: '12px Arial',
-                    fill: '#d8bfd8'
+                    fill: '#DDA0DD'
                 }).setOrigin(0.5);
 
                 // Настройка управления
@@ -561,145 +492,19 @@ $quest_data = $_SESSION['quest_data'];
                 }
 
                 this.checkForLocationTransition();
-                this.checkForLocationTransition3();
                 this.checkNPCDistance();
             }
 
-            checkQuestCompletion() {
-                // Проверяем, убиты ли все крысы для квеста
-                const ratsToKill = <?php echo json_encode($_SESSION['rats_to_kill']); ?>;
-                const deadRats = <?php echo json_encode($_SESSION['dead_rats']); ?>;
-                
-                let allRatsKilled = true;
-                ratsToKill.forEach(ratId => {
-                    if (!deadRats.includes(ratId)) {
-                        allRatsKilled = false;
-                    }
-                });
-                
-                return allRatsKilled;
-            }
-
             interactWithNPC() {
-                // Проверяем, выполнены ли условия квеста
-                const allRatsKilled = this.checkQuestCompletion();
+                const message = "Я уже пьяный! Подраться у меня не получится!\n\n" +
+                              "*Меллстрой отрубился*\n" +
+                              "*Вы сорвали с него изи брижди и ушли с богом*";
                 
-                // Если квест уже выполнен, ничего не делаем
-                if (this.questCompleted) {
-                    const completedMessage = "Спасибо еще раз, братан!\nМоя кузница снова в безопасности.";
-                    this.showQuestText(completedMessage);
-                    this.time.delayedCall(3000, () => {
-                        this.hideQuestText();
-                    });
-                    return;
-                }
+                this.showQuestText(message);
                 
-                // Основная логика взаимодействия с NPC
-                if (!this.questGiven && !allRatsKilled) {
-                    // Квест еще не взят и крысы не убиты - предлагаем квест
-                    this.giveQuest();
-                } else if (!this.questGiven && allRatsKilled) {
-                    // Квест не взят, но крысы уже убиты - сразу завершаем
-                    this.giveAndCompleteQuest();
-                } else if (this.questActive && allRatsKilled) {
-                    // Квест активен и крысы убиты - завершаем квест
-                    this.completeQuest();
-                } else if (this.questGiven && !allRatsKilled) {
-                    // Квест взят, но крысы еще не все убиты - показываем прогресс
-                    this.showQuestProgress();
-                }
-            }
-
-            giveAndCompleteQuest() {
-                this.questGiven = true;
-                this.questActive = false;
-                this.questCompleted = true;
-                
-                const questMessage = "Йоу, чувачок!\n\n" +
-                                "Я - кузнец Ярик, но можешь называть меня просто YaRich.\n" +
-                                "Вижу ты уже разобрался со снитчами в моей кузнице!\n" +
-                                "Огромное спасибо, братан!\n\n" +
-                                "Задание выполнено! Вот твоя награда - этот легендарный Шарповый Меч!";
-                
-                this.showQuestText(questMessage);
-                
-                // Сохраняем завершение квеста
-                this.completeQuestInSession();
-                
-                this.time.delayedCall(4000, () => {
-                    this.hideQuestText();
-                    location.reload();
-                });
-            }
-
-            showQuestProgress() {
-                const ratsToKill = <?php echo json_encode($_SESSION['rats_to_kill']); ?>;
-                const deadRats = <?php echo json_encode($_SESSION['dead_rats']); ?>;
-                const killedCount = deadRats.filter(ratId => ratsToKill.includes(ratId)).length;
-                const totalCount = ratsToKill.length;
-                
-                const progressMessage = `Задание в процессе!\n\n` +
-                                    `Убито крыс: ${killedCount}/${totalCount}\n` +
-                                    `Вернись ко мне, когда выполнишь задание.`;
-                
-                this.showQuestText(progressMessage);
-                
-                this.time.delayedCall(3000, () => {
+                this.time.delayedCall(5000, () => {
                     this.hideQuestText();
                 });
-            }
-
-            completeQuest() {
-                this.hideQuestText();
-                this.questActive = false;
-                this.questCompleted = true;
-                
-                // Отправляем запрос на завершение квеста
-                this.completeQuestInSession();
-                
-                const completeMessage = "Задание выполнено!\n\n" +
-                                    "Ты настоящий герой! Моя кузница снова в безопасности.\n" +
-                                    "Вот твоя награда - этот легендарный Шарповый Меч!\n\n" +
-                                    "Спасибо, братан!";
-                
-                this.showQuestText(completeMessage);
-                
-                this.time.delayedCall(4000, () => {
-                    this.hideQuestText();
-                    location.reload();
-                });
-            }
-
-            completeQuestInSession() {
-                const formData = new FormData();
-                formData.append('complete_quest', 'true');
-                
-                fetch('sharpField.php', {
-                    method: 'POST',
-                    body: formData
-                }).then(response => response.json())
-                .then(data => {
-                    console.log('Quest completed:', data);
-                }).catch(error => {
-                    console.error('Error completing quest:', error);
-                });
-            }
-
-            giveQuest() {
-                this.questGiven = true;
-                this.questActive = true;
-                
-                const questMessage = "Йоу, чувачок!\n\n" +
-                                   "Я - кузнец Ярик, но можешь называть меня просто YaRich.\n У меня короче есть темка одна.\n" +
-                                   "Долбанный снитчи заполонили мою OG кузницу.\n С неё я начинал свой путь, она мне очень важна.\n\n" +
-                                   "Уничтожь снитчей в моей кузнице и вернись ко мне.\n" +
-                                   "Без награды я тебя не оставлю!\n\n" +
-                                   "Нажмите ПРОБЕЛ для принятия задания";
-                
-                this.showQuestText(questMessage);
-                
-                // Добавляем обработчик клавиши пробела
-                this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
             }
 
             showQuestText(text) {
@@ -712,93 +517,19 @@ $quest_data = $_SESSION['quest_data'];
             }
 
             checkNPCDistance() {
-                if (this.questText.visible && this.spaceKey && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-                    this.acceptQuest();
-                }
-
                 // Автоматически скрываем текст, если игрок отошел от NPC
                 const distance = Phaser.Math.Distance.Between(
                     this.player.x, this.player.y,
                     this.npc.x, this.npc.y
                 );
 
-                if (distance > 80 && this.questText.visible && !this.questGiven) {
+                if (distance > 80 && this.questText.visible) {
                     this.hideQuestText();
-                }
-            }
-
-            acceptQuest() {
-                this.hideQuestText();
-                
-                this.currentQuest = {
-                    title: "Очистка кузницы от снитчей",
-                    objective: "Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль",
-                    reward: "Награда: Шарповый Меч",
-                    giver: "YaRich (Кузнец Ярик)",
-                    status: "Активно"
-                };
-                
-                this.saveQuestToSession(this.currentQuest);
-                
-                const acceptMessage = "Задание принято!\n\n" +
-                                    "Цель: Уничтожить снитчей в кузнице на подходе к столице С++ Цивиль.\n" +
-                                    "Вернитесь к YaRich после выполнения";
-                
-                this.showQuestText(acceptMessage);
-                
-                this.time.delayedCall(3000, () => {
-                    this.hideQuestText();
-                    location.reload();
-                });
-            }
-
-            // Сохранения квеста в сессию
-            saveQuestToSession(questData) {
-                const formData = new FormData();
-                formData.append('quest_update', 'true');
-                formData.append('quest_active', 'true');
-                formData.append('quest_title', questData.title);
-                formData.append('quest_objective', questData.objective);
-                formData.append('quest_reward', questData.reward);
-                formData.append('quest_giver', questData.giver);
-                formData.append('quest_status', questData.status);
-                
-                fetch('sharpField.php', {
-                    method: 'POST',
-                    body: formData
-                }).then(response => {
-                    console.log('Quest saved to session');
-                }).catch(error => {
-                    console.error('Error saving quest:', error);
-                });
-            }
-
-            showQuestPanel() {
-                // Показываем красивую панель с информацией о задании
-                const questInfo = document.getElementById('questInfo');
-                if (questInfo) {
-                    questInfo.style.display = 'block';
                 }
             }
 
             checkForLocationTransition() {
-                const pathTopRow = 13;
-                const pathStartCol = 14;
-                const pathEndCol = 15;
-                
-                const playerTileX = Math.floor(this.player.x / this.tileSize);
-                const playerTileY = Math.floor(this.player.y / this.tileSize);
-                
-                if (playerTileY === pathTopRow && 
-                    playerTileX >= pathStartCol && 
-                    playerTileX <= pathEndCol) {
-                    
-                    window.location.href = 'index.php'; 
-                }
-            }
-
-            checkForLocationTransition3() {
-                const pathTopRow = 1;
+                const pathTopRow = 14;
                 const pathStartCol = 14;
                 const pathEndCol = 16;
                 
@@ -809,7 +540,7 @@ $quest_data = $_SESSION['quest_data'];
                     playerTileX >= pathStartCol && 
                     playerTileX <= pathEndCol) {
                     
-                    window.location.href = 'Myrino.php'; 
+                    window.location.href = 'sharpField.php'; 
                 }
             }
         }
