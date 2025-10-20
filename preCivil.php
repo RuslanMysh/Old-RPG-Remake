@@ -903,8 +903,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rat_killed'])) {
 
         checkForLocationTransition() {
             const pathTopRow = 14;
-            const pathStartCol = 15;
-            const pathEndCol = 16;
+            const pathStartCol = 14;
+            const pathEndCol = 15;
             
             const playerTileX = Math.floor(this.player.x / this.tileSize);
             const playerTileY = Math.floor(this.player.y / this.tileSize);
@@ -913,7 +913,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rat_killed'])) {
                 playerTileX >= pathStartCol && 
                 playerTileX <= pathEndCol) {
                 
-                window.location.href = 'index.php'; 
+                window.location.href = 'Civil.php'; 
             }
         }
         checkForLocationTransition2() {
